@@ -1,0 +1,4 @@
+lib/nimblerest.rb 175669ffba0c20e5f138bbe591063947789c546f
+lib/puppet/type/nimblearray.rb e06a691c8821001624a9c669d5a271125d8bf9ad
+lib/puppet/provider/nimblearray/volume.rb 593ffff0db6cb64133304e3c96b480ee74fde6e9
+lib/puppet/provider/nimblearray/snapshot.rb 70dea96cac7879debe9624f856a2175c89b1d329
