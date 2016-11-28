@@ -3,7 +3,13 @@
 This module allows to interact with different objects in Nimble Storage Arrays like Volumes, Snapshot etc.
 
 ## Usage
+# Method 1 - Run With Puppet master and agent
+* In your puppet master copy the modules to something like /etc/puppetlabs/code/modules/
+* In /etc/puppetlabs/code/environments/production/manifests/site.pp define node definitions. Look at sample site.pp
+* In site.pp define resources like nimble_volume,nimble_initiatorgroup,nimble_initiator
+* On client run puppet agent -t
 
+# Method 2 - Run masterless from your launcher host
 Define your environment in the yaml file where hiera can find them. For example in /etc/puppetlabs/code/environments/production/hieradata/nodes/primary.yaml
 
 ```
