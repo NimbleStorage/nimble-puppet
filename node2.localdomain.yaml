@@ -1,5 +1,5 @@
 credentials:
-  server: pnanda-af.vlab.nimblestorage.com
+  server: <arrayname>.nimblestorage.com
   username: admin
   password: admin
   port: 5392
