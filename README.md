@@ -7,6 +7,7 @@ This module allows to interact with different objects in Nimble Storage Arrays l
 * In your puppet master copy the modules to something like /etc/puppetlabs/code/modules/
 * In /etc/puppetlabs/code/environments/production/manifests/site.pp define node definitions. Look at sample site.pp
 * In site.pp define resources like nimble_volume,nimble_initiatorgroup,nimble_initiator
+* Define your yaml file /etc/puppetlabs/code/environments/production/hieradata/nodes/<nodename>.yaml. Look at sample node1 and node2.yaml
 * On client run puppet agent -t
 
 # Method 2 - Run masterless from your launcher host
