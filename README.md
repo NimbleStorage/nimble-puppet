@@ -54,3 +54,6 @@ nimblearray { 'create a snapshot':
 
 Now apply it like
 ```$ puppet apply --certname=primary foo.pp ```
+
+# License
+Apache 2.0, please see [LICENSE](LICENSE)
