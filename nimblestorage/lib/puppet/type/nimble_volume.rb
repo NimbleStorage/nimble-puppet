@@ -89,4 +89,10 @@ Puppet::Type.newtype(:nimble_volume) do
     newparam(:agent_type) do
         desc "External management agent type. Default: 'none'. Possible values: 'smis', 'none', 'all', 'vvol'.	"
     end
+    newparam(:config) do
+      desc "ISCSI Config"
+    end
+    newparam(:mp) do
+      desc "Name of initiator Group"
+    end
 end
