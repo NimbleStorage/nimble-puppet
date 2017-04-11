@@ -88,13 +88,13 @@ mount_points:
   volume_1:
     ensure: present
     target_vol: "%{alias('volumes.volume_1.name')}"
-    mount_point: "~/%{alias('volumes.volume_1.name')}"
+    mount_point: /home/agent/vol_1
     fs: xfs
     label: vol1
   volume_2:
     ensure: present
     target_vol: "%{alias('volumes.volume_2.name')}"
-    mount_point: "~/%{alias('volumes.volume_2.name')}"
+    mount_point: /home/agent/vol_1
     fs: xfs
     label: vol2
 
