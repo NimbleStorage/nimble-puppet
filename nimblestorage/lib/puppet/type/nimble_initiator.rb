@@ -3,7 +3,7 @@ Puppet::Type.newtype(:nimble_initiator) do
 
     ensurable
     newparam(:name) do
-        desc "Name of initiator"
+        desc "Name of initiator Group"
         #isnamevar
     end
     newparam(:transport) do
@@ -26,8 +26,5 @@ Puppet::Type.newtype(:nimble_initiator) do
     end
     newparam(:wwpn) do
       desc "WWPN (World Wide Port Name) of the Fibre Channel initiator. WWPN is required when creating a Fibre Channel initiator. Each initiator WWPN can have an associated alias specified using the alias attribute. You can choose not to enter the alias for an initiator if you prefer not to assign an initiator alias. Eight bytes expressed in hex separated by colons. Example: af:32:f1:20:bc:ba:43:1a"
-    end
-    newparam(:group_name) do
-      desc "Initiator group that this initiator is assigned to"
     end
 end

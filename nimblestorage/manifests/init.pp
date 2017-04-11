@@ -1,48 +1,75 @@
 # Class: nimblestorage
 # ===========================
 #
-# Full description of class nimblestorage here.
-#
-# Parameters
-# ----------
-#
-# Document parameters here.
-#
-# * `sample parameter`
-# Explanation of what this parameter affects and what it defaults to.
-# e.g. "Specify one or more upstream ntp servers as an array."
-#
-# Variables
-# ----------
-#
-# Here you should define a list of variables that this module would require.
-#
-# * `sample variable`
-#  Explanation of how this variable affects the function of this class and if
-#  it has a default. e.g. "The parameter enc_ntp_servers must be set by the
-#  External Node Classifier as a comma separated list of hostnames." (Note,
-#  global variables should be avoided in favor of class parameters as
-#  of Puppet 2.6.)
-#
-# Examples
-# --------
-#
-# @example
-#    class { 'nimblestorage':
-#      servers => [ 'pool.ntp.org', 'ntp.local.company.com' ],
-#    }
-#
 # Authors
 # -------
 #
-# Author Name <author@domain.com>
+# Author Name <ashish.koushik@msystehnologies.com>
 #
 # Copyright
 # ---------
 #
-# Copyright 2016 Your name here, unless otherwise noted.
+# Copyright 2017 Nimble Storage, Inc
 #
-class nimblestorage {
+
+class nimblestorage{
+  hiera_include("${::hostname}")
+}
+
+class nimblestorage::host_init{
+  host_init{ 'prepare_facts':
+    ensure    => present,
+    transport => merge(hiera('credentials'), hiera('transport'))
+  }
+
+  package{'xfsprogs': 
+    ensure => present
+  }
+}
+
+class nimblestorage::init{
+  class { 'ntp': }
+  class { 'nimblestorage::iscsi::service': }
+  class { 'nimblestorage::host_init': }
+}
 
 
+define multipath (
+  Boolean $ensure=true
+  ) {
+   $mod = "nimblestorage"
+   if $ensure{
+     package { "device-mapper-multipath": }
+     file { "multipath.conf":
+       require => Package["device-mapper-multipath"],
+       backup  => "true",
+       path    => "/etc/multipath.conf",
+       content => template("${mod}/multipath.conf.erb"),
+     }
+     service { "multipathd":
+       require   => File["multipath.conf"],
+       subscribe => File["multipath.conf"],
+       notify    => Exec["multipath"],
+       ensure    => "running",
+       enable    => "true",
+     }
+     exec { "multipath":
+       path        => "/bin:/usr/bin:/usr/sbin:/sbin",
+       command     => "multipath",
+       logoutput   => "true",
+       refreshonly => "true",
+     }
+   }else{
+     service { "multipathd":
+       ensure    => "stopped",
+       enable    => "false",
+     }
+     package { "device-mapper-multipath": 
+      ensure => absent 
+     }
+     file { "multipath.conf":
+       path    => "/etc/multipath.conf",
+       ensure => absent
+     }
+   }
 }

@@ -2,12 +2,13 @@ require 'fileutils'
 require "net/https"
 require "uri"
 require "nimblerest"
+require "facter"
 
 Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     desc "Work on Nimble Array Volumes"
 	mk_resource_methods
     def create
-        $token=getAuthToken(resource[:transport])
+      $token=Facter.value('token')
         perfPolicyId = nil
         requestedParams = Hash(resource)
         requestedParams.delete(:provider)
@@ -15,6 +16,8 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         requestedParams.delete(:transport)
         requestedParams.delete(:loglevel)
         requestedParams.delete(:perfpolicy)
+        requestedParams.delete(:config)
+        requestedParams.delete(:mp)
 
         unless resource[:perfpolicy].nil?
            perfPolicyId = returnPerfPolicyId(resource[:transport],resource[:perfpolicy])
@@ -33,15 +36,47 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
           if resource[:force].to_s == "true"
             $dirtyHash[:force] = true
           end
-      
-          doPUT(resource[:transport]['server'],resource[:transport]['port'],"/v1/volumes/"+volId,{"data"=>$dirtyHash},{"X-Auth-Token"=>$token})
+          if $dirtyHash['size']
+            Facter.add(resource[:name]) do
+              setcode do
+                'refresh'
+              end
+            end
+          end
+          $json = doPUT(resource[:transport]['server'],resource[:transport]['port'],"/v1/volumes/"+volId,{"data"=>$dirtyHash},{"X-Auth-Token"=>$token})
         end
         
     end
 
     def destroy
-        $token=getAuthToken(resource[:transport])
+        $token=Facter.value('token')
         volId = returnVolId(resource[:name],resource[:transport])
+        if !volId.nil?
+          volDetails = returnVolDetails(resource[:transport], resource[:name])
+        else
+          puts 'Volume '+ resource[:name] + ' not found'
+          return nil
+        end
+
+        $device = Hash.new
+        $device[:serial_num] = volDetails['data'][0]['serial_number']
+        $device[:target_name] = volDetails['data'][0]['target_name']
+        $device[:target] = resource[:config]['target']
+        $device[:port] = resource[:config]['port']
+        $device[:mp] = resource[:mp]
+
+        if self.pre_flight($device[:serial_num]) != nil
+          self.fetch_data($device[:mp], $device[:serial_num])
+          if !self.if_mount($device[:path])
+            self.unmount($device[:path])
+          else
+            if self.isIscsiLoggedIn
+              self.iscsiLogout
+            end
+          end
+          self.iscsireDiscover
+        end
+
         if volId.nil?
             puts 'Volume '+ resource[:name] + ' not found'
             return nil
@@ -50,7 +85,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
             if resource[:force]
               # Put the volume offline
               puts "Specified force=>true. Putting volume offline"
-              doPUT(resource[:transport]['server'],resource[:transport]['port'],"/v1/volumes/"+volId,{"data"=>{"online"=>"false"}},{"X-Auth-Token"=>$token})
+              doPUT(resource[:transport]['server'],resource[:transport]['port'],"/v1/volumes/"+volId,{"data"=>{"online"=>"false", "force" => "true"}},{"X-Auth-Token"=>$token})
               # Delete all Snapshots
               puts "Specified force=>true. Deleting all snapshots"
               allSnaps = returnAllSnapshots(resource[:name],resource[:transport])
@@ -61,6 +96,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
               doPUT(resource[:transport]['server'],resource[:transport]['port'],"/v1/volumes/"+volId,{"data"=>{"volcoll_id"=>""}},{"X-Auth-Token"=>$token})
               doDELETE(resource[:transport]['server'],resource[:transport]['port'],"/v1/volumes/"+volId,{"X-Auth-Token"=>$token})
             else
+              doPUT(resource[:transport]['server'],resource[:transport]['port'],"/v1/volumes/"+volId,{"data"=>{"online"=>"false"}},{"X-Auth-Token"=>$token})
               doDELETE(resource[:transport]['server'],resource[:transport]['port'],"/v1/volumes/"+volId,{"X-Auth-Token"=>$token})
             end
         end
@@ -73,7 +109,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
       end
       requestedParams = Hash(resource)
       $dirtyHash=Hash.new
-      $token=getAuthToken(resource[:transport])
+      $token=Facter.value('token')
       allVolumes = returnAllVolumes(resource[:transport])
       allVolumes.each do |volume|
           if resource[:name].eql? volume["name"]
@@ -97,35 +133,88 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
       end
       return false      
     end
-=begin
-  def self.prefetch(resources)
-  	firstResource = resources.values.first
-  	$token=getAuthToken(firstResource[:transport])
-    allVolumes = returnAllVolumes(firstResource[:transport])
-    resources.each do |name,resource|
-    	found = nil
-	    allVolumes.each do |volume|
-	    	if name.eql? volume["name"]
-	    		found = volume
-	    		result = { :ensure => :present }
-    			result[:name] = volume[:name]
-    			result[:id] = volume[:id]
-    			resource.provider = new (found,result)
-	    		break
-	    	end
-    	end
-    	if found.nil?
-    		resource.provider = new (nil, :ensure => :absent)
-    	end
+
+    def pre_flight(serial_num)
+      return Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" | tr "\n" " " ')
     end
-    puts resources
 
+    def fetch_data(mp, serial_num)
+      sleep(5)
+      if mp.to_s == "true"
+        self.retrieve_data_w_multipath(serial_num)
+      else
+        self.retrieve_data_wo_multipath(serial_num)
+      end
+    end
 
-  end
+    def iscsireDiscover
+      if system("/usr/sbin/iscsiadm -m node -p #{$device[:target]}:#{$device[:port]}")
+        Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m discovery -t st -p #{$device[:target]}:#{$device[:port]}")
+        if $device[:mp].to_s == "true"
+          Puppet::Util::Execution.execute("/usr/sbin/multipath -r" )
+        end
+      end
+    end
 
-  def self.instances  	  
-  	    
-  end
-=end
+    def isIscsiLoggedIn
+      return system("/usr/sbin/iscsiadm -m session | grep -m 1 #{$device[:target_name]}")
+    end
+
+    def trim(pl)
+      return pl.chomp
+    end
+
+    def retrieve_data_wo_multipath(serial_num)
+      $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" '))
+      $device[:map] = trim(Puppet::Util::Execution.execute("ls -l "+ $device[:originalPath] +" | awk '{print$11}' | cut -d '/' -f3  "))
+      $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
+      $device[:fs] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$2}\'   '))
+      $device[:label] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$3}\'  '))
+      $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
+      $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
+    end
+
+    def retrieve_data_w_multipath(serial_num)
+      $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" '))
+      if $device[:originalPath] != nil
+        $device[:map] = trim(Puppet::Util::Execution.execute("multipath -ll | grep -m 1 #{serial_num} | cut -d ' ' -f1 "))
+        $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
+        $device[:fs] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$2}\'  '))
+        $device[:label] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$3}\' '))
+        $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
+        $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
+      end
+    end
+
+    def unmount(path)
+      if !self.if_mount(path)
+        Puppet::Util::Execution.execute('umount ' + path)
+        self.removefstabentry
+        self.iscsiLogout
+      end
+    end
+
+    def if_mount(path)
+      return !system('mount | grep ' + path)
+    end
+
+    def iscsiLogout
+      if system("/usr/sbin/iscsiadm -m node -p #{$device[:target]}:#{$device[:port]}")
+        if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -u -T #{$device[:target_name]} -p #{$device[:target]}:#{$device[:port]}" )
+          Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m discovery -t st -p #{$device[:target]}:#{$device[:port]}")
+          if $device[:mp].to_s == "true"
+            Puppet::Util::Execution.execute("/usr/sbin/multipath -r" )
+          end
+          return true
+        else
+          return false
+        end
+      end
+    end
+
+    def removefstabentry
+      Puppet::Util::Execution.execute("/usr/bin/sed -i /#{$device[:uuid]}/d /etc/fstab" )
+    end
+
 
 end

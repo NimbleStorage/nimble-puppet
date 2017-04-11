@@ -7,7 +7,7 @@ Puppet::Type.type(:nimble_snapshot).provide(:nimble_snapshot) do
     desc "Work on Nimble Array Snapshots"
 
     def create
-        $token=getAuthToken(resource[:transport])
+        $token=Facter.value('token')
         volId = returnVolId(resource[:vol_name],resource[:transport])
         if volId.nil?
           raise "Can't create snapshot of non-existent volume " + resource[:vol_name]
@@ -28,14 +28,13 @@ Puppet::Type.type(:nimble_snapshot).provide(:nimble_snapshot) do
     end
 
     def destroy
-        $token=getAuthToken(resource[:transport])
+        $token=Facter.value('token')
         snapshotId = returnSnapshotId(resource[:name],resource[:vol_name],resource[:transport])
-        puts snapshotId
         doDELETE(resource[:transport]['server'],resource[:transport]['port'],"/v1/snapshots/"+snapshotId,{"X-Auth-Token"=>$token})
     end
 
     def exists?
-      $token=getAuthToken(resource[:transport])
+      $token=Facter.value('token')
       volId = returnVolId(resource[:vol_name],resource[:transport])
       if volId.nil?
         raise "Can't find snapshot of non-existent volume " + resource[:vol_name]
