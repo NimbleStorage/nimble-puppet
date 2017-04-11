@@ -1,59 +1,127 @@
 # Nimble Array Puppet Module
 
-This module allows to interact with different objects in Nimble Storage Arrays like Volumes, Snapshot etc.
+This wrapper module allows to interact with different objects in Nimble Storage Arrays like Volumes, Snapshot etc.
 
 ## Usage
-# Method 1 - Run With Puppet master and agent
-* In your puppet master copy the modules to something like /etc/puppetlabs/code/modules/
-* In /etc/puppetlabs/code/environments/production/manifests/site.pp define node definitions. Look at sample site.pp
-* In site.pp define resources like nimble_volume,nimble_initiatorgroup,nimble_initiator
-* Define your yaml file /etc/puppetlabs/code/environments/production/hieradata/nodes/<nodename>.yaml. Look at sample node1 and node2.yaml
-* On client run puppet agent -t
+### Requirements
+- fqdn, ip address and credentials of below machines
+	- Puppet master
+	- Puppet agent
+	- Nimble array (Management portal)
 
-# Method 2 - Run masterless from your launcher host
-Define your environment in the yaml file where hiera can find them. For example in /etc/puppetlabs/code/environments/production/hieradata/nodes/primary.yaml
+### How to steps
+
+#### On Puppet Master
+* Preparing master (installing puppet server & other utility tools)
+```
+ssh root@<ip master>
+curl https://raw.githubusercontent.com/NimbleStorage/nimble-puppet/master/config/client-server-init-scripts/master.sh | sh
+```
+
+
+* (Optional) Configuring array credentials for security
+```
+export EYAML_CONFIG=/etc/eyaml-conf.yaml
+cd /etc/puppetlabs/code/environments/production/hieradata
+eyaml edit secure.yaml
+```
 
 ```
 credentials:
-  server: array.vlab.nimblestorage.com
-  username: admin
-  password: admin
-  port: 5392
+  username: DEC::PKCS7[<mgmt-array-username>]!
+  password: DEC::PKCS7[<mgmt-array-password>]!
 ```
 
-Then in your foo.pp file create a resource.
+* Edit `common.yaml`
 ```
-include ::nimblestorage
-nimblearray { 'create a volume':
-  type        => 'volume',
-  ensure      => present,
-  name        => "puppet-test",
-  description => 'This is a volume',
-  size        => 100,
-  force       => true,
-  perfpolicy  => "VMware ESX",
-  agent_type  => "vvol",
-  transport   => hiera('credentials')
-}
+cd /etc/puppetlabs/code/environments/production/hieradata/
+```
+```
+transport:
+  server: <mgmt array-ip address>
+  port: <mgmt array-REST API port>
 ```
 
-For creating a snapshot
-
+* Creating node specific config script
 ```
-nimblearray { 'create a snapshot':
-  type        => 'snapshot',
-  ensure      => present,
-  name        => "puppet-test-snap",
-  vol_name    => 'puppet-test',
-  online      => true,
-  writable    => true,
-  description => 'Snap of puppet-test',
-  transport   => hiera('credentials')
-}
+cd /etc/puppetlabs/code/environments/production/hieradata/nodes/
 ```
 
-Now apply it like
-```$ puppet apply --certname=primary foo.pp ```
+* Edit `<fqdn-agent-machine>.yaml` template to a node specific script as below.
 
-# License
-Apache 2.0, please see [LICENSE](LICENSE)
+
+change the section accordingly in template.
+> `agent`
+	
+_Note_ :- Add or remove below classes according to requirements.
+
+```
+<hostname>:
+    - nimblestorage::init
+    - nimblestorage::chap
+    - nimblestorage::initiator_group
+    - nimblestorage::initiator
+    - nimblestorage::volume
+    - nimblestorage::acr
+    - nimblestorage::fs_mount
+
+```
+
+> `initiator`
+
+```
+initiator:
+  ensure: present
+  groupname:
+  label:
+  #ip_address:
+  ip_address: "*"
+  access_protocol: "iscsi"
+  description: "This is a puppet initiator group"
+  subnets:
+   - <subnet>
+```
+
+> `iscsiadm`
+
+```
+iscsiadm:
+  config: 
+    ensure: present
+    port: <port>
+    target: <data ip>
+    user:
+    password:
+```    
+
+---
+#### On Puppet agent
+
+* Preparing agent (installing puppet agent & others tools) 
+```
+ssh root@<ip agent>
+wget https://raw.githubusercontent.com/NimbleStorage/nimble-puppet/master/config/client-server-init-scripts/agent.sh -O agent.sh
+sh agent.sh
+```
+You will be asked for the puppet master IP address. If not available hit return and enter the fqdn of the master server.
+
+---
+####  Running puppet agent
+* Signing certificate request (runs on Puppet master)
+
+```
+puppet cert sign <fqdn-agent>
+```
+
+* Running puppet agent (on Puppet agent)
+```
+puppet agent -t -v
+```
+
+* Explore config directory to use nimblestorage module in your existing puppet environment.
+
+* A pre Beta Release is avaiable on https://forge.puppet.com/ashishnkmsys/nimblestorage
+
+* Use Git issues to report and track all activites, also attach (mandatory) tracelog for the same.
+
+* Users who would like to write custom manifests can utilize the module structure to eliminate the wrapper built for usage. (Note: Part manifest and part hiera is also allowed) 

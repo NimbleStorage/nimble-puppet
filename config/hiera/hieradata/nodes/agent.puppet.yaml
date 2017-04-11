@@ -1,0 +1,101 @@
+---
+#
+#
+# One time Configuration Only
+#
+#
+#
+
+
+agent:
+    - nimblestorage::init
+    - nimblestorage::chap
+    - nimblestorage::initiator_group
+    - nimblestorage::initiator
+    - nimblestorage::volume
+    - nimblestorage::acr
+    - nimblestorage::fs_mount
+
+iscsiadm:
+  config: 
+    ensure: present
+    port: 3260
+    target: 192.168.121.6
+    user: "%{alias('chap.username')}"
+    password: "%{alias('chap.password')}"
+
+multipath: 
+  config: true
+
+chap:
+  ensure: present
+  username: chapuser
+  password: password_25-24
+  systemIdentifier: test-chap-account
+
+initiator:
+  ensure: present
+  groupname: "%{::fqdn}-ig"
+  label: "%{::hostname}-%{::clientcert}"
+  #ip_address: "%{::ipaddress}"
+  ip_address: "*"
+  access_protocol: "iscsi"
+  description: "This is a puppet initiator group"
+  subnets:
+   - Management
+
+
+#
+#
+#
+#   Manage Arrays using the below maps
+#
+#
+
+
+volumes:
+  volume_1:
+    ensure: present
+    name: "%{::hostname}-vol-1"
+    size: 2700m
+    description: sample
+    perfpolicy: default
+    force: true
+  volume_2:
+    ensure: absent
+    name: "%{::hostname}-vol-2"
+    size: 1200m
+    description: sample
+    perfpolicy: default
+    force: true
+
+access_control:
+  volume_1:
+    ensure: present
+    volume_name: "%{alias('volumes.volume_1.name')}"
+    chap_user: "%{alias('chap.username')}"
+    initiator_group : "%{alias('initiator.groupname')}"
+    apply_to: both
+  volume_2:
+    ensure: present
+    volume_name: "%{alias('volumes.volume_2.name')}"
+    chap_user: "%{alias('chap.username')}"
+    initiator_group : "%{alias('initiator.groupname')}"
+    apply_to: both
+
+
+mount_points:
+  volume_1:
+    ensure: present
+    target_vol: "%{alias('volumes.volume_1.name')}"
+    mount_point: /home/agent/vol_1
+    fs: xfs
+    label: vol1
+  volume_2:
+    ensure: present
+    target_vol: "%{alias('volumes.volume_2.name')}"
+    mount_point: /home/agent/vol_1
+    fs: xfs
+    label: vol2
+
+    
