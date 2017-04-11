@@ -1,6 +1,6 @@
 # Nimble Array Puppet Module
 
-This module allows to interact with different objects in Nimble Storage Arrays like Volumes, Snapshot etc.
+This wrapper module allows to interact with different objects in Nimble Storage Arrays like Volumes, Snapshot etc.
 
 ## Usage
 ### Requirements
@@ -15,9 +15,8 @@ This module allows to interact with different objects in Nimble Storage Arrays l
 * Preparing master (installing puppet server & other utility tools)
 ```
 ssh root@<ip master>
-curl https://raw.githubusercontent.com/ashishnk/nimble-puppet/msys/config/client-server-init-scripts/master.sh | sh
+curl https://raw.githubusercontent.com/NimbleStorage/nimble-puppet/master/config/client-server-init-scripts/master.sh | sh
 ```
-
 
 
 * (Optional) Configuring array credentials for security
@@ -29,8 +28,8 @@ eyaml edit secure.yaml
 
 ```
 credentials:
-  username: DEC::PKCS7[<mgmt array-username>]!
-  password: DEC::PKCS7[<mtmt array-password>]!
+  username: DEC::PKCS7[<mgmt-array-username>]!
+  password: DEC::PKCS7[<mgmt-array-password>]!
 ```
 
 * Edit `common.yaml`
@@ -43,12 +42,12 @@ transport:
   port: <mgmt array-REST API port>
 ```
 
-* Creating node specific config (template) script
+* Creating node specific config script
 ```
 cd /etc/puppetlabs/code/environments/production/hieradata/nodes/
 ```
 
-* Edit `agent.puppet.yaml` template to a node specific script as below.
+* Edit `<fqdn-agent-machine>.yaml` template to a node specific script as below.
 
 
 change the section accordingly in template.
@@ -101,9 +100,10 @@ iscsiadm:
 * Preparing agent (installing puppet agent & others tools) 
 ```
 ssh root@<ip agent>
-curl https://raw.githubusercontent.com/ashishnk/nimble-puppet/msys/config/client-server-init-scripts/agent.sh
-sh agent.sh <ip-agent>
+wget https://raw.githubusercontent.com/NimbleStorage/nimble-puppet/master/config/client-server-init-scripts/agent.sh -O agent.sh
+sh agent.sh
 ```
+You will be asked for the puppet master IP address. If not available hit return and enter the fqdn of the master server.
 
 ---
 ####  Running puppet agent
@@ -117,3 +117,11 @@ puppet cert sign <fqdn-agent>
 ```
 puppet agent -t -v
 ```
+
+* Explore config directory to use nimblestorage module in your existing puppet environment.
+
+* A pre Beta Release is avaiable on https://forge.puppet.com/ashishnkmsys/nimblestorage
+
+* Use Git issues to report and track all activites, also attach (mandatory) tracelog for the same.
+
+* Users who would like to write custom manifests can utilize the module structure to eliminate the wrapper built for usage. (Note: Part manifest and part hiera is also allowed) 
