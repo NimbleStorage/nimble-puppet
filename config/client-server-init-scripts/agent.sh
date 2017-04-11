@@ -15,6 +15,8 @@ ln -s /opt/puppetlabs/bin/puppet /bin/puppet
 if [ $ip ]
 then
 echo "$ip puppet" | sudo tee -a /etc/hosts
-fi
+puppet agent --server puppet --waitforcert 60 -t --verbose
+else
 puppet agent --server $fqdn --waitforcert 60 -t --verbose
+fi
 puppet resource service puppet ensure=running enable=true
