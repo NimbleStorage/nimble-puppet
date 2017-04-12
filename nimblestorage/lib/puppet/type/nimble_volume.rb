@@ -15,10 +15,10 @@ Puppet::Type.newtype(:nimble_volume) do
     	desc "Credentials to connect to array"
     end
     newparam(:size) do
-        desc "Volume size in megabytes. Size is required for creating a volume but not for cloning an existing volume. Unsigned 64-bit integer. Example: 1234."
+        desc "Volume size. Can be specified in one of the following size units: [mgt]. Size is required for creating a volume but not for cloning an existing volume. Unsigned 64-bit integer. Example: 1234."
 
 	    validate do |value|
-    	  raise ArgumentError, "Value must be a Non-Zero Integer and specify a size unit. [megabytes]" unless value =~ /^\d+[mgt]{1}$/
+    	  raise ArgumentError, "Value must be a Non-Zero Integer and specify a size unit. [mgt]" unless value =~ /^\d+[mgt]{1}$/
     	end
 
     	munge do |value|
