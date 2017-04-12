@@ -30,4 +30,18 @@ Puppet::Type.newtype(:nimble_acr) do
     desc "Credentials to connect to array"
   end
 
+=begin
+  newparam(:pe_id) do
+    desc "Identifier for the protocol endpoint this access control record applies to. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'."
+  end
+
+  newparam(:snap_id) do
+    desc "Identifier for the snapshot this access control record applies to. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'."
+  end
+
+  newparam(:pe_ids) do
+    desc "List of candidate protocol endpoints that may be used to access the Virtual Volume. One of them will be selected for the access control record. This field is required only when creating an access control record for a Virtual Volume. A list of object ids."
+  end
+=end
+
 end

@@ -87,7 +87,7 @@ Puppet::Type.newtype(:nimble_volume) do
         desc "The encryption cipher of the volume. Default: 'none'. Possible values: 'none', 'aes_256_xts'.	"
     end
     newparam(:agent_type) do
-        desc "External management agent type. Default: 'none'. Possible values: 'smis', 'none', 'all', 'vvol'.	"
+        desc "External management agent type. Default: 'none'. Possible values: 'smis', 'vvol', 'openstack', 'openstackv2'."
     end
     newparam(:config) do
       desc "ISCSI Config"
@@ -95,4 +95,44 @@ Puppet::Type.newtype(:nimble_volume) do
     newparam(:mp) do
       desc "Multipath configs"
     end
+    newparam(:snap_limit_percent) do
+      desc "Limit for the space used by the volume's snapshots, expressed either as a percentage of the volume's size or as -1 to indicate that there is no limit. If this option is not specified when the volume is created, the group's default snapshot limit will be used. Signed 64-bit integer. Example: -1234."
+    end
+    newparam(:block_size) do
+        desc "Size in bytes of blocks in the volume. Unsigned 64-bit integer. Example: '1234'."
+    end
+    newparam(:clone) do
+        desc "Whether this volume is a clone. Use this attribute in combination with name and base_snap_id to create a clone by setting clone = true. Possible values: 'true', 'false'."
+    end
+    newparam(:limit_iops) do
+        desc "IOPS limit for this volume.If -1, then the volume has no IOPS limit.  If limit_iops is not specified while creating a clone, IOPS limit of parent volume will be used as limit. IOPS limit should be in range [256, 4294967294] or -1 for unlimited. If both limit_iops and limit_mbps are specified, limit_mbps must not be hit before limit_iops. In other words, IOPS and MBPS limits should honor limit_iops _ampersand_amp;lt;= ((limit_mbps MB/s * 2^20 B/MB) / block_size B). Signed 64-bit integer. Example: -1234."
+    end
+    newparam(:limit_mbps) do
+        desc "Throughput limit for this volume in MB/s. If limit_mbps is not specified when a volume is created, or if limit_mbps is set to -1, then the volume has no MBPS limit. MBPS limit should be in range [1, 4294967294] or -1 for unlimited. If both limit_iops and limit_mbps are specified, limit_mbps must not be hit before limit_iops. In other words, IOPS and MBPS limits should honor limit_iops _ampersand_amp;lt;= ((limit_mbps MB/s * 2^20 B/MB) / block_size B). Signed 64-bit integer. Example: -1234."
+    end
+    newparam(:dedupe_enabled) do
+        desc "Indicate whether dedupe is enabled. Possible values: 'true', 'false'."
+    end
+
+=begin
+    newparam(:owned_by_group_id) do
+      desc "ID of group that currently owns the volume. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'."
+    end
+    newparam(:base_snap_id) do
+    desc "Base snapshot ID. This attribute is required together with name and clone when cloning a volume with the create operation. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'."
+    end
+    newparam(:dest_pool_id) do
+        desc "ID of the destination pool where the volume is moving to. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'."
+    end
+    newparam(:metadata) do
+        desc "Key-value pairs that augment a volume's attributes. "
+    end
+    newparam(:app_uuid) do
+        desc "Application identifier of volume. String of up to 255 alphanumeric characters, hyphen, colon, dot and underscore are allowed. Example: 'rfc4122.943f7dc1-5853-497c-b530-f689ccf1bf18'."
+    end
+    newparam(:folder_id) do
+        desc "ID of the folder holding this volume. An optional NsObjectID. A 42 digit hexadecimal number or the empty string. Example: '1234123412341234123412341234123412341234cd' or ''."
+    end
+=end
+
 end
