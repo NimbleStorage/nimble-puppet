@@ -1,5 +1,5 @@
 Puppet::Type.newtype(:nimble_fs_mount) do
-  @doc = "Manages Nimble Array initiators"
+  @doc = "Manages filesystem configuration for a volume"
 
     ensurable
   newparam(:name) do
