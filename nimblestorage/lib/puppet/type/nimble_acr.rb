@@ -23,7 +23,7 @@ Puppet::Type.newtype(:nimble_acr) do
   end
 
   newparam(:lun) do
-    desc "LUN (Logical Unit Number) to associate with this volume for access by Fibre Channel initiator group. Valid LUNs are in the 0-2047 range. If not specified, system will generate one for you."
+    desc "LUN (Logical Unit Number) to associate with this volume for access by both iSCSI and Fibre Channel initiator group. Valid LUNs are in the 0-2047 range. If not specified, system will generate one for you."
   end
 
   newparam(:transport) do

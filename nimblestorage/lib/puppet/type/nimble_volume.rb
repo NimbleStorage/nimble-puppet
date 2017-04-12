@@ -3,11 +3,11 @@ Puppet::Type.newtype(:nimble_volume) do
 
     ensurable
     newparam(:name) do
-        desc "Name of the volume. String of of up to 215 alphanumeric, hyphenated, colon, or period separated characters but cannot begin with hyphen, colon or period. This type is used for volumes, snapshots and snapshot_collections object sets.	"
+        desc "Name of the volume. String of of up to 215 alphanumeric, hyphenated, colon, or period separated characters but cannot begin with hyphen, colon or period. This type is used for volumes, snapshots and snapshot_collections object sets."
         isnamevar
     end
     newparam(:online, :boolean => :true) do
-        desc "Online state of volume, available for host initiators to establish connections. Default: 'true'. Possible values: 'true', 'false'.	"
+        desc "Online state of volume, available for host initiators to establish connections. Possible values: 'true', 'false'."
         newvalues(:true, :false)
         defaultto(:true)
     end
@@ -15,10 +15,10 @@ Puppet::Type.newtype(:nimble_volume) do
     	desc "Credentials to connect to array"
     end
     newparam(:size) do
-        desc "Volume size. Can be specified in one of the following size units: [mgt]."
-	    
+        desc "Volume size in megabytes. Size is required for creating a volume but not for cloning an existing volume. Unsigned 64-bit integer. Example: 1234."
+
 	    validate do |value|
-    	  raise ArgumentError, "Value must be a Non-Zero Integer and specify a size unit. [mgt]" unless value =~ /^\d+[mgt]{1}$/
+    	  raise ArgumentError, "Value must be a Non-Zero Integer and specify a size unit. [megabytes]" unless value =~ /^\d+[mgt]{1}$/
     	end
 
     	munge do |value|
@@ -35,9 +35,9 @@ Puppet::Type.newtype(:nimble_volume) do
         end
     	end
     end
-    
+
     newparam(:force, :boolean => :false) do
-        desc "Force the volume operation"
+        desc "Forcibly offline, reduce size or change read-only status a volume. Possible values: 'true', 'false'."
         newvalues(:true, :false)
         defaultto(:false)
     end
@@ -60,7 +60,7 @@ Puppet::Type.newtype(:nimble_volume) do
         desc "Threshold for available space as a percentage of volume size below which an alert is raised. If this option is not specified, array default volume warn level setting is used to decide the warning level for this volume. Default: (default volume warning level set on the group, typically 80). Percentage as integer from 0 to 100.	"
     end
     newparam(:limit) do
-        desc "Limit for the volume as a percentage of volume size. Default: (default volume limit set on group, typically 100). Percentage as integer from 0 to 100.	"
+        desc "Limit for the volume as a percentage of volume size. Percentage as integer from 0 to 100."
     end
     newparam(:snap_reserve) do
         desc "Amount of space to reserve for snapshots of this volume as a percentage of volume size. Default: (default snapshot reserve set on the group, typically 0). Unsigned 64-bit integer. Example: 1234.	"
@@ -93,6 +93,6 @@ Puppet::Type.newtype(:nimble_volume) do
       desc "ISCSI Config"
     end
     newparam(:mp) do
-      desc "Name of initiator Group"
+      desc "Multipath configs"
     end
 end
