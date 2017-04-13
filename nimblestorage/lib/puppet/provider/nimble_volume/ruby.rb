@@ -43,6 +43,9 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
               end
             end
           end
+          if $dirtyHash['online'].to_s == 'false'
+            self.putVolumeOffline(resource)
+          end
           $json = doPUT(resource[:transport]['server'],resource[:transport]['port'],"/v1/volumes/"+volId,{"data"=>$dirtyHash},{"X-Auth-Token"=>$token})
         end
         
@@ -58,24 +61,8 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
           return nil
         end
 
-        $device = Hash.new
-        $device[:serial_num] = volDetails['data'][0]['serial_number']
-        $device[:target_name] = volDetails['data'][0]['target_name']
-        $device[:target] = resource[:config]['target']
-        $device[:port] = resource[:config]['port']
-        $device[:mp] = resource[:mp]
+        self.putVolumeOffline(resource)
 
-        if self.pre_flight($device[:serial_num]) != nil
-          self.fetch_data($device[:mp], $device[:serial_num])
-          if !self.if_mount($device[:path])
-            self.unmount($device[:path])
-          else
-            if self.isIscsiLoggedIn
-              self.iscsiLogout
-            end
-          end
-          self.iscsireDiscover
-        end
 
         if volId.nil?
             puts 'Volume '+ resource[:name] + ' not found'
@@ -215,6 +202,36 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     def removefstabentry
       Puppet::Util::Execution.execute("/usr/bin/sed -i /#{$device[:uuid]}/d /etc/fstab" )
     end
+
+  def putVolumeOffline(resource)
+    volId = returnVolId(resource[:name],resource[:transport])
+    if !volId.nil?
+      volDetails = returnVolDetails(resource[:transport], resource[:name])
+    else
+      puts 'Volume '+ resource[:name] + ' not found'
+      return nil
+    end
+
+    $device = Hash.new
+    $device[:serial_num] = volDetails['data'][0]['serial_number']
+    $device[:target_name] = volDetails['data'][0]['target_name']
+    $device[:target] = resource[:config]['target']
+    $device[:port] = resource[:config]['port']
+    $device[:mp] = resource[:mp]
+
+    if self.pre_flight($device[:serial_num]) != nil
+      self.fetch_data($device[:mp], $device[:serial_num])
+      if !self.if_mount($device[:path])
+        self.unmount($device[:path])
+      else
+        if self.isIscsiLoggedIn
+          self.iscsiLogout
+        end
+      end
+      self.iscsireDiscover
+    end
+
+  end
 
 
 end

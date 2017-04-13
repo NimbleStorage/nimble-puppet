@@ -28,9 +28,12 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
 
   def iscsireDiscover
     if system("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
-      Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
-      if $device[:mp].to_s == "true"
-        Puppet::Util::Execution.execute("/usr/sbin/multipath -r")
+      if system("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
+        if $device[:mp].to_s == "true"
+          Puppet::Util::Execution.execute("/usr/sbin/multipath -r")
+        end
+      else
+        return nil
       end
     end
   end

@@ -42,7 +42,7 @@ Puppet::Type.type(:nimble_initiator).provide(:nimble_initiator) do
 
   def destroy
     $token=Facter.value('token')
-    initiatorId = returnInitiatorId(resource[:transport], requestedParams[:iqn], resource[:ip_address], resource[:label])
+    initiatorId = returnInitiatorId(resource[:transport], Facter.value(:iscsi_initiator), resource[:ip_address], resource[:label])
     doDELETE(resource[:transport]['server'], resource[:transport]['port'], "/v1/initiators/"+initiatorId, {"X-Auth-Token" => $token})
   end
 
@@ -56,7 +56,7 @@ Puppet::Type.type(:nimble_initiator).provide(:nimble_initiator) do
     $dirtyHash=Hash.new
     allinitiators = returnAllinitiators(resource[:transport])
     allinitiators.each do |initiator|
-      if (requestedParams[:iqn].eql? initiator["iqn"]) || (resource["ip_address"].eql? initiator["ip_address"]) || (resource["label"].eql? initiator["label"])
+      if (requestedParams[:iqn].eql? initiator["iqn"]) || (resource["label"].eql? initiator["label"])
         if deleteRequested
           return true
         end
