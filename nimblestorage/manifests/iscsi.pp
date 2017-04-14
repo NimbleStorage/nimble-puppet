@@ -63,6 +63,15 @@ define nimblestorage::iscsi (
 
   if $ensure == 'present'{
 
+    case $::osfamily {
+      'Debian': {
+        file { '/usr/sbin/iscsiadm':
+          ensure => 'link',
+          target => '/usr/bin/iscsiadm',
+        }
+      }
+    }
+
     $iface = split($::interfaces, ',')
 
     $iface.each |String $i| {

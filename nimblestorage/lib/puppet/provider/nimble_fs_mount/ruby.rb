@@ -7,7 +7,7 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   desc "Work on Nimble Array initiators"
 
   def pre_flight(serial_num)
-    return Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" | tr "\n" " " ')
+    return Puppet::Util::Execution.execute('find /dev -name "[uuid]*' + serial_num + '*" | tr \'\n\' \' \' | cut -d \' \' -f1')
   end
 
   def reDiscoverRefresh
@@ -39,6 +39,9 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   end
 
   def iscsiLogin
+    if self.isIscsiLoggedIn
+      return true
+    end
     if system("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']} | grep #{$iscsiadm[:target_name]}")
       if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
         if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -l -T #{$iscsiadm[:target_name]} -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
@@ -86,7 +89,7 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   def fstabentry
     self.removefstabentry
     if resource[:ensure].to_s == 'present'
-      Puppet::Util::Execution.execute("echo -e 'UUID=#{$device[:uuid]}  #{$device[:mount_point]}  #{$device[:fs]} _netdev,auto,x-systemd.requires=#{$device[:originalPath]} 0 0' | tee -a /etc/fstab")
+      Puppet::Util::Execution.execute("echo 'UUID=#{$device[:uuid]}  #{$device[:mount_point]}  #{$device[:fs]} _netdev,auto,x-systemd.requires=#{$device[:originalPath]} 0 0' | tee -a /etc/fstab")
     end
   end
 
@@ -104,7 +107,7 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   end
 
   def retrieve_data_wo_multipath(serial_num)
-    $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" '))
+    $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[uuid]*' + serial_num + '*" | tr \'\n\' \' \' | cut -d \' \' -f1'))
     if $device[:originalPath] != nil
       $device[:map] = trim(Puppet::Util::Execution.execute("ls -l "+ $device[:originalPath] +" | awk '{print$11}' | cut -d '/' -f3  "))
       $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
@@ -116,7 +119,7 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   end
 
   def retrieve_data_w_multipath(serial_num)
-    $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" '))
+    $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[uuid]*' + serial_num + '*" | tr \'\n\' \' \' | cut -d \' \' -f1'))
     if $device[:originalPath] != nil
       $device[:map] = trim(Puppet::Util::Execution.execute("multipath -ll | grep -m 1 #{serial_num} | cut -d ' ' -f1 "))
       $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
@@ -139,7 +142,6 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
     if self.if_mount(path)
       self.removefstabentry
       Puppet::Util::Execution.execute('mount ' + path + ' ' + mount_point)
-      self.fstabentry
     end
   end
 
@@ -208,6 +210,8 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
           self.mount($device[:path], resource[:mount_point])
 
           self.fetch_data("#{resource[:mp]}", serial_num)
+
+          self.fstabentry
 
           self.reDiscoverRefresh
         else

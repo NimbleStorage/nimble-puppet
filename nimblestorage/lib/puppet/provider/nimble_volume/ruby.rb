@@ -122,7 +122,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     end
 
     def pre_flight(serial_num)
-      return Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" | tr "\n" " " ')
+      return Puppet::Util::Execution.execute('find /dev -name "[uuid]*' + serial_num + '*" | tr "\n" " " ')
     end
 
     def fetch_data(mp, serial_num)
@@ -152,7 +152,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     end
 
     def retrieve_data_wo_multipath(serial_num)
-      $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" '))
+      $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[uuid]*' + serial_num + '*" | tr \'\n\' \' \' | cut -d \' \' -f1'))
       $device[:map] = trim(Puppet::Util::Execution.execute("ls -l "+ $device[:originalPath] +" | awk '{print$11}' | cut -d '/' -f3  "))
       $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
       $device[:fs] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$2}\'   '))
@@ -162,7 +162,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     end
 
     def retrieve_data_w_multipath(serial_num)
-      $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" '))
+      $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[uuid]*' + serial_num + '*" | tr \'\n\' \' \' | cut -d \' \' -f1 '))
       if $device[:originalPath] != nil
         $device[:map] = trim(Puppet::Util::Execution.execute("multipath -ll | grep -m 1 #{serial_num} | cut -d ' ' -f1 "))
         $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
