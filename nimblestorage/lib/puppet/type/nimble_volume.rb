@@ -98,9 +98,6 @@ Puppet::Type.newtype(:nimble_volume) do
     newparam(:snap_limit_percent) do
       desc "Limit for the space used by the volume's snapshots, expressed either as a percentage of the volume's size or as -1 to indicate that there is no limit. If this option is not specified when the volume is created, the group's default snapshot limit will be used. Signed 64-bit integer. Example: -1234."
     end
-    newparam(:block_size) do
-        desc "Size in bytes of blocks in the volume. Unsigned 64-bit integer. Example: '1234'."
-    end
     newparam(:clone) do
         desc "Whether this volume is a clone. Use this attribute in combination with name and base_snap_id to create a clone by setting clone = true. Possible values: 'true', 'false'."
     end
