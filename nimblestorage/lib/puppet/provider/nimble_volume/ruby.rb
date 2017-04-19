@@ -135,10 +135,13 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     end
 
     def iscsireDiscover
-      if system("/usr/sbin/iscsiadm -m node -p #{$device[:target]}:#{$device[:port]}")
-        Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m discovery -t st -p #{$device[:target]}:#{$device[:port]}")
-        if $device[:mp].to_s == "true"
-          Puppet::Util::Execution.execute("/usr/sbin/multipath -r" )
+      if system("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
+        if system("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
+          if $device[:mp].to_s == "true"
+            Puppet::Util::Execution.execute("/usr/sbin/multipath -r")
+          end
+        else
+          return nil
         end
       end
     end
