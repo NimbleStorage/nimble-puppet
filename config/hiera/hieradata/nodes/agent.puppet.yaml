@@ -13,23 +13,23 @@ agent:
 
 iscsiadm:
   config: 
-    ensure: absent
+    ensure: present
     port: 3260
     target: 192.168.121.6
     user: "%{alias('chap.username')}"
     password: "%{alias('chap.password')}"
 
 multipath: 
-  config: false
+  config: true
 
 chap:
-  ensure: absent
+  ensure: present
   username: chapuser
   password: password_25-24
-  systemIdentifier: test-chap-account
+  systemIdentifier: test-chap-account # Puppet identifies this as its name of the instantiated resource in manifest.
 
 initiator:
-  ensure: absent
+  ensure: present
   groupname: "%{::fqdn}-ig"
   label: "%{::hostname}-%{::clientcert}"
   #ip_address: "%{::ipaddress}"
@@ -47,24 +47,67 @@ initiator:
 #
 #
 
+protection_template:
+  prot-temp-1:
+    ensure: absent
+    schedule_list:
+      - name: schedule-1-1
+        num_retain: 30
+      - name: schedule-2-1
+        num_retain: 60
+      - name: schedule-3-1
+        num_retain: 90
+      - name: schedule-4-1
+        num_retain: 120
+  prot-temp-2:
+    ensure: absent
+    schedule_list:
+      - name: schedule-1-2
+        num_retain: 120
+      - name: schedule-2-2
+        num_retain: 120
+
+
+volume_collection:
+  vol-coll-1:
+    ensure: absent
+    prottmpl_name: prot-temp-2
+  vol-coll-2:
+    ensure: absent
+    prottmpl_name: prot-temp-1
+  vol-coll-3:
+    ensure: absent
+    prottmpl_name: prot-temp-2
+
 
 volumes:
   volume_1:
-    ensure: absent
+    ensure: present
     name: "%{::hostname}-vol-1"
-    size: 3900m
+    size: 210m
     description: sample
     perfpolicy: default
     force: true
     online: true
+    vol_coll: vol-coll-3
   volume_2:
-    ensure: absent
+    ensure: present
     name: "%{::hostname}-vol-2"
     size: 20m
     description: sample
     perfpolicy: default
     force: true
     online: true
+    vol_coll: vol-coll-2
+  volume_3:
+    ensure: present
+    name: "%{::hostname}-vol-3"
+    size: 20m
+    description: sample
+    perfpolicy: default
+    force: true
+    online: true
+    vol_coll: vol-coll-1
 
 access_control:
   volume_1:
@@ -79,20 +122,29 @@ access_control:
     chap_user: "%{alias('chap.username')}"
     initiator_group : "%{alias('initiator.groupname')}"
     apply_to: both
-
+  volume_3:
+    ensure: present
+    volume_name: "%{alias('volumes.volume_3.name')}"
+    chap_user: "%{alias('chap.username')}"
+    initiator_group : "%{alias('initiator.groupname')}"
+    apply_to: both
 
 mount_points:
   volume_1:
-    ensure: present
+    ensure: absent
     target_vol: "%{alias('volumes.volume_1.name')}"
     mount_point: /home/agent/vol_1
-    fs: xfs
+    fs: ext3
     label: vol1
   volume_2:
-    ensure: present
+    ensure: absent
     target_vol: "%{alias('volumes.volume_2.name')}"
     mount_point: /home/agent/vol_2
     fs: xfs
     label: vol2
-
-    
+  volume_3:
+    ensure: absent
+    target_vol: "%{alias('volumes.volume_3.name')}"
+    mount_point: /home/agent/vol_3
+    fs: xfs
+    label: vol3

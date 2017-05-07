@@ -30,6 +30,13 @@ Puppet::Type.newtype(:nimble_acr) do
     desc "Credentials to connect to array"
   end
 
+  newparam(:config) do
+    desc "ISCSI Config"
+  end
+
+  newparam(:mp) do
+    desc "Multipath configs"
+  end
 =begin
   newparam(:pe_id) do
     desc "Identifier for the protocol endpoint this access control record applies to. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'."

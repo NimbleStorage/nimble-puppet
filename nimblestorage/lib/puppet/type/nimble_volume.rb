@@ -110,6 +110,9 @@ Puppet::Type.newtype(:nimble_volume) do
     newparam(:dedupe_enabled) do
         desc "Indicate whether dedupe is enabled. Possible values: 'true', 'false'."
     end
+  newparam(:vol_coll)do
+    desc "Volume Collection to join"
+  end
 
 =begin
     newparam(:owned_by_group_id) do

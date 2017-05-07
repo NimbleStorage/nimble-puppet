@@ -314,3 +314,24 @@ def returnACRDetails(transport, volid)
   acrdetails = doGET(transport['server'], transport['port'], "/v1/access_control_records/detail?vol_id="+volid.to_s , {"X-Auth-Token" => $token})
   return acrdetails['data']
 end
+
+# Get the access control record details from volume identifier.
+def pt_details_api(transport, name)
+  $token=Facter.value('token')
+  pt_details = doGET(transport['server'], transport['port'], "/v1/protection_templates/detail?name=" + name , {"X-Auth-Token" => $token})
+  return pt_details['data'][0] if !pt_details['data'].nil? else return {}
+end
+
+# Get the access control record details from volume identifier.
+def vc_details_api(transport, name)
+  $token=Facter.value('token')
+  pt_details = doGET(transport['server'], transport['port'], "/v1/volume_collections/detail?name=" + name , {"X-Auth-Token" => $token})
+  return pt_details['data'][0] if !pt_details['data'].nil? else return {}
+end
+
+def vc_id(transport, name)
+  det = vc_details_api(transport, name)
+  if det != nil
+    return det['id']
+  end
+end

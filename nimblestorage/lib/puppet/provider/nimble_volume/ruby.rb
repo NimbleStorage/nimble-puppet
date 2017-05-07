@@ -19,7 +19,10 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     requestedParams.delete(:perfpolicy)
     requestedParams.delete(:config)
     requestedParams.delete(:mp)
-
+    if requestedParams[:vol_coll]
+      $vol_coll = requestedParams[:vol_coll]
+      requestedParams.delete(:vol_coll)
+    end
     unless resource[:perfpolicy].nil?
       perfPolicyId = returnPerfPolicyId(resource[:transport], resource[:perfpolicy])
       if perfPolicyId.nil?
@@ -30,7 +33,15 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     if $dirtyHash.size == 0
       requestedParams.delete(:force)
       puts "Creating New Volume #{resource[:name]}"
-      doPOST(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes", {"data" => requestedParams}, {"X-Auth-Token" => $token})
+      vol = doPOST(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes", {"data" => requestedParams}, {"X-Auth-Token" => $token})
+      begin
+        vol_col_id = vc_id(resource[:transport], $vol_coll)
+        if vol_col_id != nil
+          doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+vol['data']['id'], {"data" => {:volcoll_id => vol_col_id }}, {"X-Auth-Token" => $token})
+        end
+      rescue => e
+        #puts e.message
+      end
     else
       volId = returnVolId(resource[:name], resource[:transport])
       puts "Updating existing Volume #{resource[:name]} with id = #{volId}. Values to change #{$dirtyHash}"
@@ -46,6 +57,12 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
       end
       if $dirtyHash['online'].to_s == 'false'
         self.putVolumeOffline(resource)
+      end
+      if $vol_coll
+        $dirtyHash[:volcoll_id] = vc_id(resource[:transport], $vol_coll)
+        if $dirtyHash[:volcoll_id] != nil
+          doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {:volcoll_id => ''}}, {"X-Auth-Token" => $token})
+        end
       end
       $json = doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => $dirtyHash}, {"X-Auth-Token" => $token})
     end
@@ -96,6 +113,10 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
       deleteRequested = true
     end
     requestedParams = Hash(resource)
+    if requestedParams[:vol_coll]
+      requestedParams[:volcoll_id] = vc_id(resource[:transport], requestedParams[:vol_coll])
+      requestedParams.delete(:vol_coll)
+    end
     $dirtyHash=Hash.new
     $token=Facter.value('token')
     allVolumes = returnAllVolumes(resource[:transport])
@@ -131,7 +152,6 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
   end
 
   def fetch_data(mp, serial_num)
-    sleep(5)
     if mp.to_s == "true"
       self.retrieve_data_w_multipath(serial_num)
     else
@@ -170,6 +190,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
         $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
       end
+      rescue => e
     end
   end
 
@@ -184,6 +205,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
         $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
       end
+      rescue => e
     end
   end
 
@@ -200,6 +222,9 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
   end
 
   def iscsiLogout
+    if !self.isIscsiLoggedIn
+      return true
+    end
     if system("/usr/sbin/iscsiadm -m node -p #{$device[:target]}:#{$device[:port]} >> /dev/null 2>&1")
       if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -u -T #{$device[:target_name]} -p #{$device[:target]}:#{$device[:port]} >> /dev/null 2>&1")
         Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m discovery -t st -p #{$device[:target]}:#{$device[:port]} >> /dev/null 2>&1")
@@ -239,9 +264,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         if !self.if_mount($device[:path])
           self.unmount($device[:path])
         else
-          if self.isIscsiLoggedIn
-            self.iscsiLogout
-          end
+          self.iscsiLogout
         end
         self.iscsireDiscover
       end
