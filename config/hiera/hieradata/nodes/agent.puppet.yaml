@@ -8,8 +8,8 @@
 
 
 agent:
-    - nimblestorage::create
-    #-nimblestorage::cleanup
+    #- nimblestorage::create
+    - nimblestorage::cleanup
 
 iscsiadm:
   config: 
@@ -23,13 +23,13 @@ multipath:
   config: true
 
 chap:
-  ensure: present
+  ensure: absent
   username: chapuser
   password: password_25-24
   systemIdentifier: test-chap-account # Puppet identifies this as its name of the instantiated resource in manifest.
 
 initiator:
-  ensure: present
+  ensure: absent
   groupname: "%{::fqdn}-ig"
   label: "%{::hostname}-%{::clientcert}"
   #ip_address: "%{::ipaddress}"
@@ -82,25 +82,25 @@ volume_collection:
 
 volumes:
   volume_1:
-    ensure: present
+    ensure: absent
     name: "%{::hostname}-vol-1"
     size: 210m
     description: sample
     perfpolicy: default
     force: true
     online: true
-    vol_coll: vol-coll-3
+    vol_coll: vol-coll-2
   volume_2:
-    ensure: present
+    ensure: absent
     name: "%{::hostname}-vol-2"
     size: 20m
     description: sample
     perfpolicy: default
     force: true
     online: true
-    vol_coll: vol-coll-2
+    vol_coll: vol-coll-1
   volume_3:
-    ensure: present
+    ensure: absent
     name: "%{::hostname}-vol-3"
     size: 20m
     description: sample
