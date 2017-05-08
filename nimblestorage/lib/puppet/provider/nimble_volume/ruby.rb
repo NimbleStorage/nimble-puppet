@@ -63,6 +63,8 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         if $dirtyHash[:volcoll_id] != nil
           doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {:volcoll_id => ''}}, {"X-Auth-Token" => $token})
         end
+      else
+        doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {:volcoll_id => ''}}, {"X-Auth-Token" => $token})
       end
       $json = doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => $dirtyHash}, {"X-Auth-Token" => $token})
     end
