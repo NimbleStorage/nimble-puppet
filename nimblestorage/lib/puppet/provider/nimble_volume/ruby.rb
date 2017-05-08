@@ -23,7 +23,9 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
       $vol_coll = requestedParams[:vol_coll]
       requestedParams.delete(:vol_coll)
     else
-      requestedParams[:volcoll_id] = ''
+      if $dirtyHash.size > 0
+        requestedParams[:volcoll_id] = ''
+      end
     end
     unless resource[:perfpolicy].nil?
       perfPolicyId = returnPerfPolicyId(resource[:transport], resource[:perfpolicy])
