@@ -22,6 +22,8 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     if requestedParams[:vol_coll]
       $vol_coll = requestedParams[:vol_coll]
       requestedParams.delete(:vol_coll)
+    else
+      requestedParams[:volcoll_id] = ''
     end
     unless resource[:perfpolicy].nil?
       perfPolicyId = returnPerfPolicyId(resource[:transport], resource[:perfpolicy])
@@ -63,8 +65,6 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         if $dirtyHash[:volcoll_id] != nil
           doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {:volcoll_id => ''}}, {"X-Auth-Token" => $token})
         end
-      else
-        doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {:volcoll_id => ''}}, {"X-Auth-Token" => $token})
       end
       $json = doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => $dirtyHash}, {"X-Auth-Token" => $token})
     end
@@ -118,6 +118,8 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     if requestedParams[:vol_coll]
       requestedParams[:volcoll_id] = vc_id(resource[:transport], requestedParams[:vol_coll])
       requestedParams.delete(:vol_coll)
+    else
+      requestedParams[:volcoll_id] = ''
     end
     $dirtyHash=Hash.new
     $token=Facter.value('token')
