@@ -179,9 +179,17 @@ cd /etc/puppetlabs/code/environments/production/hieradata/nodes/
 
 
 change the section accordingly in template.
+
 > `agent`
 	
-_Note_ :- Add or remove below classes according to requirements.
+```
+<hostname>:
+    - nimblestorage::create
+#    - nimblestorage::cleanup
+
+```
+
+_Note_ :- Above configuration covers below resource configs, add or remove classes according to requirements.(optional) 
 
 ```
 <hostname>:
@@ -189,11 +197,26 @@ _Note_ :- Add or remove below classes according to requirements.
     - nimblestorage::chap
     - nimblestorage::initiator_group
     - nimblestorage::initiator
+    - nimblestorage::protection_template
+    - nimblestorage::volume_collection
     - nimblestorage::volume
     - nimblestorage::acr
     - nimblestorage::fs_mount
+    - nimblestorage::snapshot
 
 ```
+
+> `iscsiadm`
+
+```
+iscsiadm:
+  config: 
+    ensure: present
+    port: <port>
+    target: <data ip>
+    user:
+    password:
+``` 
 
 > `initiator`
 
@@ -209,18 +232,6 @@ initiator:
   subnets:
    - <subnet>
 ```
-
-> `iscsiadm`
-
-```
-iscsiadm:
-  config: 
-    ensure: present
-    port: <port>
-    target: <data ip>
-    user:
-    password:
-```    
 
 ---
 
