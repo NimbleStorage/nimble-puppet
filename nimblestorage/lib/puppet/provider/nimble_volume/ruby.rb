@@ -105,6 +105,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {"volcoll_id" => ""}}, {"X-Auth-Token" => $token})
         doDELETE(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"X-Auth-Token" => $token})
       else
+        doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {"volcoll_id" => ""}}, {"X-Auth-Token" => $token})
         doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {"online" => "false"}}, {"X-Auth-Token" => $token})
         doDELETE(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"X-Auth-Token" => $token})
       end
@@ -117,12 +118,14 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
       deleteRequested = true
     end
     requestedParams = Hash(resource)
+
     if requestedParams[:vol_coll]
       requestedParams[:volcoll_id] = vc_id(resource[:transport], requestedParams[:vol_coll])
       requestedParams.delete(:vol_coll)
     else
       requestedParams[:volcoll_id] = ''
     end
+
     $dirtyHash=Hash.new
     $token=Facter.value('token')
     allVolumes = returnAllVolumes(resource[:transport])

@@ -29,13 +29,4 @@ Puppet::Type.newtype(:nimble_snapshot) do
     desc "External management agent type. Possible values: 'none', 'smis', 'vvol', 'openstack', 'openstackv2'."
     end
 
-=begin
-    newparam(:app_uuid) do
-      desc "Application identifier of snapshots. String of up to 255 alphanumeric characters, hyphen, colon, dot and underscore are allowed. Example: 'rfc4122.943f7dc1-5853-497c-b530-f689ccf1bf18'."
-    end
-    newparam(:metadata) do
-      desc "Key-value pairs that augment a snapshot's attributes. List of key-value pairs. Keys must be unique and non-empty. When creating an object, values must be non-empty. When updating an object, an empty value causes the corresponding key to be removed."
-    end
-=end
-
 end

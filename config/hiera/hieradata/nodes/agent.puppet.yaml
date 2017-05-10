@@ -148,3 +148,8 @@ mount_points:
     mount_point: /home/agent/vol_3
     fs: xfs
     label: vol3
+
+
+snapshots:
+  snapshot-1:
+    ensure: present

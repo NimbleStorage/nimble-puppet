@@ -25,7 +25,7 @@ Puppet::Type.type(:nimble_protection_template).provide(:nimble_protection_templa
     if !self.schedule_id(resource, add)
       doPOST(resource[:transport]['server'], resource[:transport]['port'], "/v1/protection_schedules", {"data" => self.mergeof_psmeta(add) },{"X-Auth-Token" => $token})
     else
-      self.update(resource, add, add)
+      #self.update(resource, add, add)
     end
   end
 
@@ -41,7 +41,6 @@ Puppet::Type.type(:nimble_protection_template).provide(:nimble_protection_templa
   end
 
   def update(resource, del, add)
-    payload = Hash.new
     payload = self.rethash(Hash(add))
     payload.delete(:name)
     if self.schedule_id(resource, add)
@@ -65,13 +64,6 @@ Puppet::Type.type(:nimble_protection_template).provide(:nimble_protection_templa
     $token=Facter.value('token')
     protection_template = Hash.new
     protection_template[:name] = resource[:name]
-    #requestedParams.delete(:provider)
-    #requestedParams.delete(:ensure)
-    #requestedParams.delete(:transport)
-    #requestedParams.delete(:loglevel)
-    #requestedParams.delete(:perfpolicy)
-    #requestedParams.delete(:config)
-    #requestedParams.delete(:mp)
 
     pt_details = pt_details_api(resource[:transport], resource[:name])
 
@@ -81,7 +73,7 @@ Puppet::Type.type(:nimble_protection_template).provide(:nimble_protection_templa
       $pt_id = pt_details['id']
     end
 
-    if resource[:schedule_list].size != 0
+    if resource[:schedule_list].size > 0
       resource[:schedule_list].each do |schedule|
         schedule.each do |k, v|
           key = k.to_s
