@@ -152,4 +152,6 @@ mount_points:
 
 snapshots:
   snapshot-1:
-    ensure: present
+    ensure: absent
+    vol_name: "%{alias('volumes.volume_1.name')}"
+    online: true
