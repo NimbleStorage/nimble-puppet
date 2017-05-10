@@ -186,7 +186,6 @@ change the section accordingly in template.
 <hostname>:
     - nimblestorage::create
 #    - nimblestorage::cleanup
-
 ```
 
 _Note_ :- Above configuration covers below resource configs, add or remove classes according to requirements.(optional) 
@@ -203,7 +202,6 @@ _Note_ :- Above configuration covers below resource configs, add or remove class
     - nimblestorage::acr
     - nimblestorage::fs_mount
     - nimblestorage::snapshot
-
 ```
 
 > `iscsiadm`
