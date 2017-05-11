@@ -216,19 +216,104 @@ iscsiadm:
     password:
 ``` 
 
+> `multipath`
+
+```
+  config: true
+```
+
+> chap
+
+```
+  ensure: present
+  username: chapuser
+  password: password_25-24
+  systemIdentifier: test-chap-account
+```
+
 > `initiator`
 
 ```
 initiator:
   ensure: present
-  groupname:
-  label:
+  groupname: initiator-group
+  label: initiator
   #ip_address:
   ip_address: "*"
   access_protocol: "iscsi"
   description: "This is a puppet initiator group"
   subnets:
    - <subnet>
+```
+
+> `protection_template`  
+
+```
+  prot-temp-1:
+    ensure: present
+    schedule_list:
+      - name: schedule-1-1
+        num_retain: 10
+      - name: schedule-2-1
+        num_retain: 20
+```
+
+> `volume_collection`
+
+```
+  vol-coll-1:
+    ensure: present
+    prottmpl_name: prot-temp-1
+```
+
+> `volumes`
+
+```
+volumes:
+  volume_1:
+    ensure: present
+    name: volume-1
+    size: <volume size><mgt>
+   #clone: <true/false>
+   #base_snap_name: <base snapshot name>
+    description: sample
+    perfpolicy: default
+    force: true
+    online: true
+    vol_coll: vol-coll-1
+   #restore_from: <base snapshot name>
+```
+
+> `access_control`
+
+```
+  volume_1:
+    ensure: present
+    volume_name: volume-1
+    chap_user: chapuser
+    initiator_group: initiator-group
+    apply_to: both
+```
+
+> `mount_points`
+
+```
+  volume_1:
+    ensure: present
+    target_vol: volume-1
+    mount_point: </path/to/mount>
+    fs: <file system>
+    label: vol_1
+```
+
+> `snapshots`
+
+```
+  snapshot-1:
+    ensure: absent
+    vol_name: volume-1
+    online: true
+    writable: true
 ```
 
 ---
