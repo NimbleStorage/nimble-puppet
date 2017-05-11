@@ -25,4 +25,8 @@ Puppet::Type.newtype(:nimble_snapshot) do
       newvalues(:true, :false)
       defaultto(:false)
     end
+    newparam(:agent_type) do
+    desc "External management agent type. Possible values: 'none', 'smis', 'vvol', 'openstack', 'openstackv2'."
+    end
+
 end

@@ -6,7 +6,7 @@ require "net/https"
 require "uri"
 
 
-# Do a HTTP Put
+# Do a HTTP Put.
 def doPUT(server, port, path, postData, header=nil)
   server='https://'+server+':'+port.to_s+path
   uri = URI.parse(server)
@@ -29,7 +29,7 @@ def doPUT(server, port, path, postData, header=nil)
   end
 end
 
-# Do a HTTP Get
+# Do a HTTP Get.
 def doGET(server, port, path, header=nil)
   server='https://'+server+':'+port.to_s+path
   uri = URI.parse(server)
@@ -48,7 +48,7 @@ def doGET(server, port, path, header=nil)
   end
 end
 
-# Do a HTTP Post
+# Do a HTTP Post.
 def doPOST(server, port, path, postData, header=nil)
   server='https://'+server+':'+port.to_s+path
   uri = URI.parse(server)
@@ -71,7 +71,7 @@ def doPOST(server, port, path, postData, header=nil)
   end
 end
 
-# Do a HTTP Delete
+# Do a HTTP Delete.
 def doDELETE(server, port, path, header=nil)
   server='https://'+server+':'+port.to_s+path
   uri = URI.parse(server)
@@ -91,13 +91,13 @@ def doDELETE(server, port, path, header=nil)
   end
 end
 
-# Get authentication token
+# Get authentication token to manage user's session.
 def getAuthToken(transport)
   $json = doPOST(transport['server'], transport['port'], "/v1/tokens", {"data" => {"username" => transport['username'], "password" => transport['password']}})
   return $json['data']['session_token']
 end
 
-# Get the volume Id from volume name
+# Get the volume identifier from volume (LUN) name
 def returnVolId(volname, transport)
   volumedetails = returnVolDetails(transport, volname)
   if volumedetails["data"].size != 0
@@ -107,7 +107,8 @@ def returnVolId(volname, transport)
   end
 end
 
-# Get the volume target name from volume name
+# Get the volume target name i.e. iSCSI Qualified Name (IQN) or
+# the Fibre Channel World Wide Node Name (WWNN) from volume name.
 def returnVolTargetName(volname, transport)
   volumedetails = returnVolDetails(transport, volname)
   if volumedetails["data"].size != 0
@@ -117,14 +118,14 @@ def returnVolTargetName(volname, transport)
   end
 end
 
-# Get the volume Details from volume name
+# Get the volume Details from volume name.
 def returnVolDetails(transport, volname)
   $token=Facter.value('token')
   volumedetails = doGET(transport['server'], transport['port'], "/v1/volumes/detail?name="+volname , {"X-Auth-Token" => $token})
   return volumedetails
 end
 
-# Returns all volumes using pagination
+# Returns all volumes details.
 def returnAllVolumes(transport)
   $token=Facter.value('token')
   allVolumes = Array.new
@@ -145,7 +146,7 @@ def returnAllVolumes(transport)
   return allVolumes
 end
 
-# Returns Perf Policy Id from Perf Policy Human Readable Name
+# Returns Performance Policy Id from Performance Policy Human Readable Name.
 def returnPerfPolicyId(transport, perfPolicyName)
   $token=Facter.value('token')
   allPerfPolicies = returnAllPerfPolicies(transport)
@@ -157,7 +158,7 @@ def returnPerfPolicyId(transport, perfPolicyName)
   return nil
 end
 
-# Returns all Perf Policy Names
+# Returns all Performance Policy Names associated with different volumes.
 def returnAllPerfPolicies(transport)
   $token=Facter.value('token')
   allPolicies = Array.new
@@ -178,7 +179,7 @@ def returnAllPerfPolicies(transport)
   return allPolicies
 end
 
-# Returns Snapshot Id from Snapshot name and Volume Name
+# Returns Snapshot identifier from Snapshot name and Volume Name.
 def returnSnapshotId(snapShotName, volName, transport)
   $token=Facter.value('token')
   allsnaps = returnAllSnapshots(volName, transport)
@@ -190,7 +191,7 @@ def returnSnapshotId(snapShotName, volName, transport)
   return nil
 end
 
-# Returns all snapshots of a volume
+# Returns all snapshots of a volume.
 def returnAllSnapshots(volName, transport)
   $token=Facter.value('token')
   allSnapshots = Array.new
@@ -211,7 +212,7 @@ def returnAllSnapshots(volName, transport)
   return allSnapshots
 end
 
-# Returns all Initiator Groups
+# Returns all Initiator Groups details.
 def returnAllinitiatorGroups(transport)
   $token=Facter.value('token')
   allInitiatorGroups = Array.new
@@ -232,7 +233,7 @@ def returnAllinitiatorGroups(transport)
   return allInitiatorGroups
 end
 
-# Returns all Initiators
+# Returns all Initiators details.
 def returnAllinitiators(transport)
   $token=Facter.value('token')
   allInitiators = Array.new
@@ -253,7 +254,7 @@ def returnAllinitiators(transport)
   return allInitiators
 end
 
-# Returns Id of Initiator Group
+# Returns Identifier of Initiator Group.
 def returnInitiatorGroupId(transport, initiatorgroupname)
   $token=Facter.value('token')
   allInitiatorGroups = returnAllinitiatorGroups(transport)
@@ -265,7 +266,7 @@ def returnInitiatorGroupId(transport, initiatorgroupname)
 
 end
 
-# Returns Id of Initiator
+# Returns Identifier of all Initiator.
 def returnInitiatorId(transport, iqn, ip_address, label=nil)
   $token=Facter.value('token')
   allInitiators = returnAllinitiators(transport)
@@ -276,7 +277,7 @@ def returnInitiatorId(transport, iqn, ip_address, label=nil)
   end
 end
 
-# Returns all Subnets
+# Returns all Subnets.
 def returnAllSubnets(transport)
   $token=Facter.value('token')
   allSubnets = Array.new
@@ -296,7 +297,7 @@ def returnAllSubnets(transport)
   return allSubnets
 end
 
-# Returns Id of CHAP User
+# Returns Identifier of CHAP User (Challenge-Response Handshake Authentication Protocol) using CHAP name.
 def returnChapIdFromName(transport, chap_name)
   $token=Facter.value('token')
   $resp = doGET(transport['server'], transport['port'], "/v1/chap_users/detail"+"?name="+chap_name.to_s, {"X-Auth-Token" => $token})
@@ -307,9 +308,54 @@ def returnChapIdFromName(transport, chap_name)
   end
 end
 
-# Get the volume Details from volume name
+# Get the access control record details from volume identifier.
 def returnACRDetails(transport, volid)
   $token=Facter.value('token')
   acrdetails = doGET(transport['server'], transport['port'], "/v1/access_control_records/detail?vol_id="+volid.to_s , {"X-Auth-Token" => $token})
   return acrdetails['data']
 end
+
+# Get the access control record details from volume identifier.
+def pt_details_api(transport, name)
+  $token=Facter.value('token')
+  pt_details = doGET(transport['server'], transport['port'], "/v1/protection_templates/detail?name=" + name , {"X-Auth-Token" => $token})
+  if !pt_details['data'].nil?
+    return pt_details['data'][0]
+  else
+    return nil
+  end
+end
+
+# Get the access control record details from volume identifier.
+def vc_details_api(transport, name)
+  $token=Facter.value('token')
+  vc_details = doGET(transport['server'], transport['port'], "/v1/volume_collections/detail?name=" + name , {"X-Auth-Token" => $token})
+  if !vc_details['data'].nil?
+    return vc_details['data'][0]
+  else
+    return nil
+  end
+end
+
+def vc_id(transport, name)
+  det = vc_details_api(transport, name)
+  if det != nil
+    return det['id']
+  else
+    return nil
+  end
+end
+
+# Returns Snapshot identifier from Snapshot name .
+def returnSnapId(transport, snapShotName)
+  $token=Facter.value('token')
+  snap = doGET(transport['server'], transport['port'], "/v1/snapshots?name="+snapShotName, {"X-Auth-Token" => $token})
+  if !snap['data'].nil?
+    return snap['data'][0]['id']
+  else
+    return nil
+  end
+end
+
+
+

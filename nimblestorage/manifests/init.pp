@@ -25,10 +25,21 @@ class nimblestorage::host_init{
   package{'xfsprogs': 
     ensure => present
   }
+
+  case $::osfamily {
+    'Debian': {
+      file { '/usr/bin/sed':
+        ensure => 'link',
+        target => '/bin/sed',
+      }
+    }
+  }
+
 }
 
 class nimblestorage::init{
   class { 'ntp': }
+  class { 'nimblestorage::multipath::load': }
   class { 'nimblestorage::iscsi::service': }
   class { 'nimblestorage::host_init': }
 }
@@ -39,14 +50,14 @@ define multipath (
   ) {
    $mod = "nimblestorage"
    if $ensure{
-     package { "device-mapper-multipath": }
+     package { $::nimblestorage::multipath::params::mp_packages: }
      file { "multipath.conf":
-       require => Package["device-mapper-multipath"],
+       require => Package[$::nimblestorage::multipath::params::mp_packages],
        backup  => "true",
        path    => "/etc/multipath.conf",
        content => template("${mod}/multipath.conf.erb"),
      }
-     service { "multipathd":
+     service { $::nimblestorage::multipath::params::mp_services:
        require   => File["multipath.conf"],
        subscribe => File["multipath.conf"],
        notify    => Exec["multipath"],
@@ -60,11 +71,11 @@ define multipath (
        refreshonly => "true",
      }
    }else{
-     service { "multipathd":
+     service { $::nimblestorage::multipath::params::mp_services:
        ensure    => "stopped",
        enable    => "false",
      }
-     package { "device-mapper-multipath": 
+     package { $::nimblestorage::multipath::params::mp_packages:
       ensure => absent 
      }
      file { "multipath.conf":

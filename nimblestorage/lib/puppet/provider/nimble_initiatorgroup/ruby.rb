@@ -54,7 +54,13 @@ Puppet::Type.type(:nimble_initiatorgroup).provide(:nimble_initiatorgroup) do
   def destroy
     $token=Facter.value('token')
     initiatorgroupid = returnInitiatorGroupId(resource[:transport], resource[:name])
-    doDELETE(resource[:transport]['server'], resource[:transport]['port'], "/v1/initiator_groups/"+initiatorgroupid, {"X-Auth-Token" => $token})
+    if initiatorgroupid == nil
+    return true;
+    end
+    begin
+      doDELETE(resource[:transport]['server'], resource[:transport]['port'], "/v1/initiator_groups/"+initiatorgroupid, {"X-Auth-Token" => $token})
+    rescue
+    end
   end
 
   def exists?

@@ -7,14 +7,14 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   desc "Work on Nimble Array initiators"
 
   def pre_flight(serial_num)
-    return Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" | tr "\n" " " ')
+    return Puppet::Util::Execution.execute('find /dev -name "[scsi]*' + serial_num + '*" | tr \'\n\' \' \' | cut -d \' \' -f1')
   end
 
   def reDiscoverRefresh
-    if system("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
-      Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -R -T #{$iscsiadm[:target_name]} -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
+    if system("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
+      Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -R -T #{$iscsiadm[:target_name]} -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
       if $device[:mp].to_s == "true"
-        Puppet::Util::Execution.execute("/usr/sbin/multipath -r")
+        Puppet::Util::Execution.execute("/usr/sbin/multipath -r > /dev/null 2>&1")
       end
       if !self.if_mount($device[:path])
         if $device[:fs].to_s == 'xfs'
@@ -27,20 +27,29 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   end
 
   def iscsireDiscover
-    if system("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
-      Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
-      if $device[:mp].to_s == "true"
-        Puppet::Util::Execution.execute("/usr/sbin/multipath -r")
+    if self.isIscsiLoggedIn
+      return true
+    end
+    if system("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
+      if system("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
+        if $device[:mp].to_s == "true"
+          Puppet::Util::Execution.execute("/usr/sbin/multipath -r  > /dev/null 2>&1")
+        end
+      else
+        return nil
       end
     end
   end
 
   def iscsiLogin
-    if system("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']} | grep #{$iscsiadm[:target_name]}")
-      if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
-        if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -l -T #{$iscsiadm[:target_name]} -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
+    if self.isIscsiLoggedIn
+      return true
+    end
+    if system("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']} | grep #{$iscsiadm[:target_name]} >> /dev/null 2>&1")
+      if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
+        if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -l -T #{$iscsiadm[:target_name]} -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
           if $device[:mp].to_s == "true"
-            Puppet::Util::Execution.execute("/usr/sbin/multipath -r")
+            Puppet::Util::Execution.execute("/usr/sbin/multipath -r  > /dev/null 2>&1")
           end
           return true
         else
@@ -54,11 +63,11 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
 
   def iscsiLogout
     if self.isIscsiLoggedIn
-      if system("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
-        if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -u -T #{$iscsiadm[:target_name]} -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
-          Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
+      if system("/usr/sbin/iscsiadm -m node -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
+        if Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -u -T #{$iscsiadm[:target_name]} -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
+          Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m discovery -t st -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
           if $device[:mp].to_s == "true"
-            Puppet::Util::Execution.execute("/usr/sbin/multipath -r")
+            Puppet::Util::Execution.execute("/usr/sbin/multipath -r  > /dev/null 2>&1")
           end
           return true
         else
@@ -69,11 +78,11 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   end
 
   def iscsiLogoutAll
-    Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -u -p #{$iscsiadm['target']}:#{$iscsiadm['port']}")
+    Puppet::Util::Execution.execute("/usr/sbin/iscsiadm -m node -u -p #{$iscsiadm['target']}:#{$iscsiadm['port']} >> /dev/null 2>&1")
   end
 
   def isIscsiLoggedIn
-    return system("/usr/sbin/iscsiadm -m session | grep -m 1 #{$iscsiadm[:target_name]}")
+    return system("/usr/sbin/iscsiadm -m session | grep -m 1 #{$iscsiadm[:target_name]} > /dev/null  ")
   end
 
   def removefstabentry
@@ -83,12 +92,12 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   def fstabentry
     self.removefstabentry
     if resource[:ensure].to_s == 'present'
-      Puppet::Util::Execution.execute("echo -e 'UUID=#{$device[:uuid]}  #{$device[:mount_point]}  #{$device[:fs]} _netdev,auto,x-systemd.requires=#{$device[:originalPath]} 0 0' | tee -a /etc/fstab")
+      Puppet::Util::Execution.execute("echo 'UUID=#{$device[:uuid]}  #{$device[:mount_point]}  #{$device[:fs]} _netdev,auto,x-systemd.requires=#{$device[:originalPath]} 0 0' | tee -a /etc/fstab")
     end
   end
 
   def fetch_data(mp, serial_num)
-    sleep(4)
+    sleep(1.0/24.0)
     if mp.to_s == "true"
       self.retrieve_data_w_multipath(serial_num)
     else
@@ -101,26 +110,34 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
   end
 
   def retrieve_data_wo_multipath(serial_num)
-    $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" '))
-    if $device[:originalPath] != nil
-      $device[:map] = trim(Puppet::Util::Execution.execute("ls -l "+ $device[:originalPath] +" | awk '{print$11}' | cut -d '/' -f3  "))
-      $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
-      $device[:fs] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$2}\'   '))
-      $device[:label] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$3}\'  '))
-      $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
-      $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
+    begin
+      $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[scsi]*' + serial_num + '*" | tr \'\n\' \' \' | cut -d \' \' -f1'))
+      if $device[:originalPath].to_s != nil
+        $device[:map] = trim(Puppet::Util::Execution.execute("ls -l "+ $device[:originalPath] +" | awk '{print$11}' | cut -d '/' -f3  "))
+        $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
+        $device[:fs] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$2}\'   '))
+        $device[:label] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$3}\'  '))
+        $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
+        $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
+      end
+    rescue => e
+      # puts e
     end
   end
 
   def retrieve_data_w_multipath(serial_num)
-    $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[^uuid]*' + serial_num + '*" '))
-    if $device[:originalPath] != nil
-      $device[:map] = trim(Puppet::Util::Execution.execute("multipath -ll | grep -m 1 #{serial_num} | cut -d ' ' -f1 "))
-      $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
-      $device[:fs] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$2}\'  '))
-      $device[:label] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$3}\' '))
-      $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
-      $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
+    begin
+      $device[:originalPath] = trim(Puppet::Util::Execution.execute('find /dev -name "[uuid]*' + serial_num + '*" | tr \'\n\' \' \' | cut -d \' \' -f1 '))
+      if $device[:originalPath].to_s != nil
+        $device[:map] = trim(Puppet::Util::Execution.execute("multipath -ll | grep -m 1 #{serial_num} | cut -d ' ' -f1 "))
+        $device[:path] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$1}\' '))
+        $device[:fs] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$2}\'  '))
+        $device[:label] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$3}\' '))
+        $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
+        $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
+      end
+    rescue => e
+      # puts e
     end
   end
 
@@ -128,15 +145,13 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
     if !self.if_mount(path)
       Puppet::Util::Execution.execute('umount ' + path)
       self.removefstabentry
-      self.iscsiLogout
     end
   end
 
   def mount(path, mount_point)
     if self.if_mount(path)
-      self.removefstabentry
+        self.removefstabentry
       Puppet::Util::Execution.execute('mount ' + path + ' ' + mount_point)
-      self.fstabentry
     end
   end
 
@@ -174,6 +189,7 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
             end
           end
 
+          sleep(3)
           self.fetch_data("#{resource[:mp]}", serial_num)
 
           if $device[:label] != resource[:label]
@@ -206,28 +222,31 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
 
           self.fetch_data("#{resource[:mp]}", serial_num)
 
+          self.fstabentry
+
           self.reDiscoverRefresh
         else
           puts "Target not Discoverable"
         end
 
       end
-    rescue Exception => e
+    rescue => e
       puts e.message
-      puts e.backtrace.inspect
+      #puts e.backtrace.inspect
     end
 
   end
 
   def destroy
     $vol_details = returnVolDetails(resource[:transport], resource[:target_vol])
-    if $vol_details['data'][0]['serial_number'] != nil
+    if $vol_details['data'].size > 0 && $vol_details['data'][0]['serial_number'] != nil
       serial_num = $vol_details['data'][0]['serial_number']
       if self.pre_flight(serial_num) != nil
         $device = Hash.new
         self.fetch_data("#{resource[:mp]}", serial_num)
         if !self.if_mount($device[:path])
           self.unmount($device[:path])
+          self.iscsiLogout
         end
       else
         return false
@@ -237,9 +256,6 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
 
   def exists?
     deleteRequested = false
-    if resource[:ensure].to_s == "absent"
-      deleteRequested = true
-    end
     $device = Hash.new
     $device[:mp] = resource[:mp]
     $iscsiadm = Hash(resource[:config])
@@ -247,6 +263,12 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
     if $vol_details['data'].size !=0 && $vol_details['data'][0]['serial_number'] != nil
       serial_num = $vol_details['data'][0]['serial_number']
       $iscsiadm[:target_name] = $vol_details['data'][0]['target_name']
+      if resource[:ensure].to_s == "absent"
+        deleteRequested = true
+        if !self.isIscsiLoggedIn
+          return false
+        end
+      end
       if !deleteRequested
         self.iscsireDiscover
         if !self.iscsiLogin
