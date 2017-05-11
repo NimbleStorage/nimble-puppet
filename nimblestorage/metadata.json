@@ -1,6 +1,6 @@
 {
     "name": "nimble-nimblestorage",
-    "version": "0.1.0",
+    "version": "2.0.0",
     "author": "Ashish-MSys Technologies LLC",
     "summary": "Module to create/manage/maintain Nimblestorage arrays",
     "license": "Apache-2.0",

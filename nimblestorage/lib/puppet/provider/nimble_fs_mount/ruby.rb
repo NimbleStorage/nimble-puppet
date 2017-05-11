@@ -239,7 +239,6 @@ Puppet::Type.type(:nimble_fs_mount).provide(:nimble_fs_mount) do
 
   def destroy
     $vol_details = returnVolDetails(resource[:transport], resource[:target_vol])
-    puts $vol_details
     if $vol_details['data'].size > 0 && $vol_details['data'][0]['serial_number'] != nil
       serial_num = $vol_details['data'][0]['serial_number']
       if self.pre_flight(serial_num) != nil

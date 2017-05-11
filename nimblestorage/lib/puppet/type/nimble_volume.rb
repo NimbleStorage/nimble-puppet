@@ -118,6 +118,10 @@ Puppet::Type.newtype(:nimble_volume) do
     desc "Base snapshot ID. This attribute is required together with name and clone when cloning a volume with the create operation. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'."
   end
 
+  newparam(:restore_from) do
+    desc "Base snapshot ID. This attribute is required together with name and clone when cloning a volume with the create operation. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'."
+  end
+
 =begin
     newparam(:owned_by_group_id) do
       desc "ID of group that currently owns the volume. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'."

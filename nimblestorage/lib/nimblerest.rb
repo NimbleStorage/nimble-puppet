@@ -319,19 +319,43 @@ end
 def pt_details_api(transport, name)
   $token=Facter.value('token')
   pt_details = doGET(transport['server'], transport['port'], "/v1/protection_templates/detail?name=" + name , {"X-Auth-Token" => $token})
-  return pt_details['data'][0] if !pt_details['data'].nil? else return {}
+  if !pt_details['data'].nil?
+    return pt_details['data'][0]
+  else
+    return nil
+  end
 end
 
 # Get the access control record details from volume identifier.
 def vc_details_api(transport, name)
   $token=Facter.value('token')
-  pt_details = doGET(transport['server'], transport['port'], "/v1/volume_collections/detail?name=" + name , {"X-Auth-Token" => $token})
-  return pt_details['data'][0] if !pt_details['data'].nil? else return {}
+  vc_details = doGET(transport['server'], transport['port'], "/v1/volume_collections/detail?name=" + name , {"X-Auth-Token" => $token})
+  if !vc_details['data'].nil?
+    return vc_details['data'][0]
+  else
+    return nil
+  end
 end
 
 def vc_id(transport, name)
   det = vc_details_api(transport, name)
   if det != nil
     return det['id']
+  else
+    return nil
   end
 end
+
+# Returns Snapshot identifier from Snapshot name .
+def returnSnapId(transport, snapShotName)
+  $token=Facter.value('token')
+  snap = doGET(transport['server'], transport['port'], "/v1/snapshots?name="+snapShotName, {"X-Auth-Token" => $token})
+  if !snap['data'].nil?
+    return snap['data'][0]['id']
+  else
+    return nil
+  end
+end
+
+
+

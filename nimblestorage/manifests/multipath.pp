@@ -5,9 +5,7 @@ class nimblestorage::multipath::load inherits nimblestorage::multipath::params{
   }
 }
 
-
 class nimblestorage::multipath::params {
-
   case $::osfamily {
     'RedHat': {
       $mp_packages = 'device-mapper-multipath'

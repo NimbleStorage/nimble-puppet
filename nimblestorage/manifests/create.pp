@@ -8,5 +8,5 @@ class nimblestorage::create{
   require nimblestorage::volume
   require nimblestorage::acr
   require nimblestorage::fs_mount
-  requrie nimblestorage::snapshot
+  require nimblestorage::snapshot
 }

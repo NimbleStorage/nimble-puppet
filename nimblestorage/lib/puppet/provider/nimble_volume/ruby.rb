@@ -27,6 +27,46 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         requestedParams[:volcoll_id] = ''
       end
     end
+
+    if $dirtyHash.size == 0
+      if requestedParams[:clone] && requestedParams[:clone] == true
+        requestedParams[:base_snap_id] = returnSnapId(resource[:transport], requestedParams[:base_snap_name])
+        if requestedParams[:base_snap_id] == nil
+          puts 'Base Snapshot not found'
+          return false
+        end
+      end
+      requestedParams.delete(:base_snap_name)
+    else
+      if $dirtyHash.key?('clone')
+        puts 'Base snapshot cannot be updated with an existing volume'
+        return false
+      end
+    end
+
+    if requestedParams[:restore_from] && requestedParams[:restore_from] != nil
+      requestedParams[:base_snap_id] = returnSnapId(resource[:transport], requestedParams[:restore_from])
+      if requestedParams[:base_snap_id] == nil
+        puts 'Base snap id not found to restore volume'
+        return false
+      end
+      requestedParams.delete(:restore_from)
+      volId = returnVolId(resource[:name], resource[:transport])
+      if volId == nil
+        puts 'Voulme is non existent to restore from snapshot'
+        return false
+      end
+      begin
+        self.putVolumeOffline(resource)
+        doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {"online" => "false", "force" => "true"}}, {"X-Auth-Token" => $token})
+        doPOST(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/#{volId}/actions/restore", {"data" => {"base_snap_id" => requestedParams[:base_snap_id], "id" => volId }}, {"X-Auth-Token" => $token})
+        doPUT(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"data" => {"online" => "true"}}, {"X-Auth-Token" => $token})
+      rescue => e
+        #puts e.message
+      end
+      return true
+    end
+
     unless resource[:perfpolicy].nil?
       perfPolicyId = returnPerfPolicyId(resource[:transport], resource[:perfpolicy])
       if perfPolicyId.nil?
@@ -34,6 +74,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
       end
       requestedParams["perfpolicy_id"] = perfPolicyId
     end
+
     if $dirtyHash.size == 0
       requestedParams.delete(:force)
       puts "Creating New Volume #{resource[:name]}"
@@ -86,6 +127,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
     self.putVolumeOffline(resource)
 
 
+    begin
     if volId.nil?
       puts 'Volume '+ resource[:name] + ' not found'
       return nil
@@ -110,6 +152,9 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         doDELETE(resource[:transport]['server'], resource[:transport]['port'], "/v1/volumes/"+volId, {"X-Auth-Token" => $token})
       end
     end
+    rescue => e
+    end
+
   end
 
   def exists?
@@ -124,6 +169,26 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
       requestedParams.delete(:vol_coll)
     else
       requestedParams[:volcoll_id] = ''
+    end
+
+    if requestedParams[:clone] && requestedParams[:clone] == true
+      requestedParams[:base_snap_id] = returnSnapId(resource[:transport], requestedParams[:base_snap_name])
+      if requestedParams[:base_snap_id] == nil
+        requestedParams.delete(:base_snap_id)
+      end
+      requestedParams.delete(:base_snap_name)
+    end
+
+    if requestedParams[:restore_from] && requestedParams[:restore_from] != nil
+      requestedParams[:base_snap_id] = returnSnapId(resource[:transport], requestedParams[:restore_from])
+      if requestedParams[:base_snap_id] == nil
+        requestedParams.delete(:base_snap_id)
+      end
+      requestedParams.delete(:restore_from)
+      volId = returnVolId(resource[:name], resource[:transport])
+      if volId != nil
+        return false
+      end
     end
 
     $dirtyHash=Hash.new
@@ -199,7 +264,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
         $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fp | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
       end
-      rescue => e
+    rescue => e
     end
   end
 
@@ -214,7 +279,7 @@ Puppet::Type.type(:nimble_volume).provide(:nimble_volume) do
         $device[:uuid] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$4}\' '))
         $device[:mount_point] = trim(Puppet::Util::Execution.execute('lsblk -fpl | grep -m 1 '+$device[:map]+' | awk \'{print$5}\' '))
       end
-      rescue => e
+    rescue => e
     end
   end
 

@@ -10,7 +10,8 @@ Puppet::Type.type(:nimble_snapshot).provide(:nimble_snapshot) do
         $token=Facter.value('token')
         volId = returnVolId(resource[:vol_name],resource[:transport])
         if volId.nil?
-          raise "Can't create snapshot of non-existent volume " + resource[:vol_name]
+          puts "Can't create snapshot of non-existent volume " + resource[:vol_name]
+          return false
         end
         createHash = Hash.new
         createHash["name"] = resource[:name]
@@ -30,14 +31,17 @@ Puppet::Type.type(:nimble_snapshot).provide(:nimble_snapshot) do
     def destroy
         $token=Facter.value('token')
         snapshotId = returnSnapshotId(resource[:name],resource[:vol_name],resource[:transport])
-        doDELETE(resource[:transport]['server'],resource[:transport]['port'],"/v1/snapshots/"+snapshotId,{"X-Auth-Token"=>$token})
+        begin
+          doDELETE(resource[:transport]['server'],resource[:transport]['port'],"/v1/snapshots/"+snapshotId,{"X-Auth-Token"=>$token})
+        rescue => e
+        end
     end
 
     def exists?
       $token=Facter.value('token')
       volId = returnVolId(resource[:vol_name],resource[:transport])
       if volId.nil?
-        raise "Can't find snapshot of non-existent volume " + resource[:vol_name]
+        puts "Can't find snapshot of non-existent volume " + resource[:vol_name]
       end
       allSnapshots = returnAllSnapshots(resource[:vol_name],resource[:transport])
       allSnapshots.each do |snapshot|
