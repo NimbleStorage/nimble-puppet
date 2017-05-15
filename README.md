@@ -157,7 +157,7 @@ chmod 644 /etc/puppetlabs/keys/*
 puppet generate types
 ```
 
-* Installing **eyaml** & creating secret keys
+* Installing **eyaml** & creating secret keys (optional)
 
 ```
 gem install hiera hiera-eyaml
