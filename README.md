@@ -1,13 +1,14 @@
 # Nimble Array Puppet Module
 
-This wrapper module allows to interact with different objects in Nimble Storage Arrays like Volumes, Snapshot etc.
+This wrapper module allows interacting with different objects in Nimble Storage Arrays like Volumes, Snapshots, Volume collection, access control record, CHAP,
+protection template, initiator & initiator group,  etc.
 
 ## Usage
 ### Requirements
-- fqdn, ip address and credentials of below machines
-	- Puppet master
-	- Puppet agent
-	- Nimble array (Management portal)
+- fqdn, IP address and credentials of below machines
+    - Puppet master
+    - Puppet agent
+    - Nimble array (Management portal)
 
 ### How to steps
 ---
@@ -18,19 +19,19 @@ This wrapper module allows to interact with different objects in Nimble Storage 
 
 - Puppet usually uses an agent/master (client/server) architecture, but it can also run in a self-contained architecture.
 - Network configuration
-	- **Firewalls** : The Puppet master server must allow incoming connections on port 8140.
-	> on Apt-based systems
-	 
-	```
-	ufw allow 8140
-	```
-	> on Yum-based systems
-	
-	```
-	iptables -F
-	iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport 8140 -j ACCEPT
-	```
-- **Timekeeping** on your Puppet master server & agent.	Choose time zone accordingly.
+    - **Firewalls** : The Puppet master server must allow incoming connections on port 8140.
+    > on Apt-based systems
+     
+    ```
+    ufw allow 8140
+    ```
+    > on Yum-based systems
+    
+    ```
+    iptables -F
+    iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport 8140 -j ACCEPT
+    ```
+- **Timekeeping** on your Puppet master server & agent.    Choose time zone accordingly.
 > on Yum-based systems
 
 ```
@@ -52,7 +53,7 @@ service ntp restart
 ```
 
 
-- Installing Rubygems & git
+- Installing RubyGems & git
 > on Yum-based systems
 ```
 yum -y install rubygems git
@@ -120,7 +121,20 @@ ln -s /opt/puppetlabs/bin/puppet /bin/puppet
 
 * installing puppet module for NimbleStorage
 ```
-puppet module install ashishnkmsys-nimblestorage
+puppet module install nimble-nimblestorage
+```
+
+* cloning git repository & putting other files in place
+```
+git clone 'https://github.com/NimbleStorage/nimble-puppet'
+cd nimble-puppet
+
+cp config/eyaml/eyaml-conf.yaml /etc/eyaml-conf.yaml
+cp config/hiera/hiera.yaml /etc/puppetlabs/puppet/hiera.yaml
+cp -r config/hiera/hieradata /etc/puppetlabs/code/environments/production
+cp config/site.pp /etc/puppetlabs/code/environments/production/manifests
+chmod 644 /etc/puppetlabs/keys/*
+puppet generate types
 ```
 
 * Installing **eyaml** & creating secret keys
@@ -132,20 +146,6 @@ gem install hiera hiera-eyaml
 export EYAML_CONFIG=/etc/eyaml-conf.yaml
 eyaml createkeys
 mv keys /etc/puppetlabs
-```
-
-* cloning git repository & putting other files in place
-```
-git clone 'https://github.com/ashishnk/nimble-puppet'
-cd nimble-puppet
-git checkout msys
-
-cp config/eyaml/eyaml-conf.yaml /etc/eyaml-conf.yaml
-cp config/hiera/hiera.yaml /etc/puppetlabs/puppet/hiera.yaml
-cp -r config/hiera/hieradata /etc/puppetlabs/code/environments/production
-cp config/site.pp /etc/puppetlabs/code/environments/production/manifests
-chmod 644 /etc/puppetlabs/keys/*
-puppet generate types
 ```
 
 * (Optional) Configuring array credentials for security
@@ -178,14 +178,13 @@ cd /etc/puppetlabs/code/environments/production/hieradata/nodes/
 * Edit `<fqdn-agent-machine>.yaml` template to a node specific script as below.
 
 
-change the section accordingly in template.
+change the section accordingly in a template.
 
 > `agent`
-	
+    
 ```
 <hostname>:
     - nimblestorage::create
-#    - nimblestorage::cleanup
 ```
 
 _Note_ :- Above configuration covers below resource configs, add or remove classes according to requirements.(optional) 
@@ -202,6 +201,13 @@ _Note_ :- Above configuration covers below resource configs, add or remove class
     - nimblestorage::acr
     - nimblestorage::fs_mount
     - nimblestorage::snapshot
+```
+
+- For deleting & cleaning all resources
+    
+```
+<hostname>:
+    - nimblestorage::cleanup
 ```
 
 > `iscsiadm`
@@ -268,20 +274,41 @@ initiator:
 
 > `volumes`
 
+- For creating a volume
+
 ```
 volumes:
   volume_1:
     ensure: present
     name: volume-1
     size: <volume size><mgt>
-   #clone: <true/false>
-   #base_snap_name: <base snapshot name>
-    description: sample
+    description: sample volume
     perfpolicy: default
     force: true
     online: true
     vol_coll: vol-coll-1
-   #restore_from: <base snapshot name>
+```
+
+- For cloning a volume
+
+```
+volumes:
+  volume_1:
+    ensure: present
+    name: clone-vol-1
+    clone: true
+    base_snap_name: <base snapshot name>
+    description: This is a cloned volume
+```
+
+- For restoring a volume
+
+```
+volumes:
+  volume_1:
+    ensure: present
+    name: volume-1	# name of the restored volume
+    restore_from: <base snapshot name>
 ```
 
 > `access_control`
@@ -321,10 +348,12 @@ volumes:
 #### Post installation tasks on Puppet agent
 
 * editing hosts configs
-```
-ip=<master-ip>
-echo "$ip puppet" | sudo tee -a /etc/hosts
-```
+     
+     - append below line to `/etc/hosts` file
+     
+     ```
+     <master-ip> puppet
+     ```
 
 * Start puppet agent on the node and make it start automatically on system boot.
 ```
@@ -352,10 +381,10 @@ puppet agent -t -v
 
 ---
 
-* Explore config directory to use nimblestorage module in your existing puppet environment.
+* Explore config directory to use a nimblestorage module in your existing puppet environment.
 
-* A pre Beta Release is avaiable on https://forge.puppet.com/ashishnkmsys/nimblestorage
+* A final release candidate is available on https://forge.puppet.com/nimble/nimblestorage
 
-* Use Git issues to report and track all activites, also attach (mandatory) tracelog for the same.
+* Use Git issues to report and track all activities, also attach (mandatory) trace log for the same.
 
 * Users who would like to write custom manifests can utilize the module structure to eliminate the wrapper built for usage. (Note: Part manifest and part hiera is also allowed) 
