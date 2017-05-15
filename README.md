@@ -1,5 +1,25 @@
 # Nimble Array Puppet Module
 
+## Changelog
+
+<a name="2.0 (Stable)"></a>
+#  (2017-05-15)
+
+### Features
+
+- added support for Volume collection, snapshot, protection template & protection schedule
+- added Ubuntu compatibilty
+
+
+<a name="0.1 (beta)"></a>
+#  (2017-04-15)
+
+### Features
+
+- added support for CHAP user, initiator, initiator group, acess control record & volume
+
+---
+
 This wrapper module allows interacting with different objects in Nimble Storage Arrays like Volumes, Snapshots, Volume collection, access control record, CHAP,
 protection template, initiator & initiator group,  etc.
 
