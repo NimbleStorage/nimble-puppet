@@ -6,7 +6,7 @@ Puppet::Type.newtype(:host_init) do
     desc "Name of Resource"
   end
   newparam(:transport) do
-    desc "Transport to connect to array"
+    desc "credentials to connect to array"
   end
 
 end
