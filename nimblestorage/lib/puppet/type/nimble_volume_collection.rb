@@ -1,10 +1,10 @@
 Puppet::Type.newtype(:nimble_volume_collection) do
-  @doc = "Manages Nimble Array Volume"
+  @doc = "Manages Nimble Volume collection"
 
   ensurable
 
   newparam(:name) do
-    desc "Name of the volume. String of of up to 215 alphanumeric, hyphenated, colon, or period separated characters but cannot begin with hyphen, colon or period. This type is used for volumes, snapshots and snapshot_collections object sets."
+    desc "Name of volume collection. String of up to 64 alphanumeric characters, - and . and : are allowed after first character. Example: 'myobject-5'"
     isnamevar
   end
 
@@ -13,11 +13,11 @@ Puppet::Type.newtype(:nimble_volume_collection) do
   end
 
   newparam(:prottmpl_name) do
-    desc "Forcibly offline, reduce size or change read-only status a volume. Possible values: 'true', 'false'."
+    desc "Identifier of the protection template whose attributes will be used to create this volume collection. This attribute is only used for input when creating a volume collection and is not outputed. A 42 digit hexadecimal number. Example: '2a0df0fe6f7dc7bb16000000000000000000004817'"
   end
 
   newparam(:description) do
-    desc "Text description of volume. Default: ''. String of up to 255 printable ASCII characters. Example: '99.9999% availability'.	"
+    desc "Text description of volume collection. String of up to 255 printable ASCII characters. Example: '99.9999% availability'."
   end
 
 end
