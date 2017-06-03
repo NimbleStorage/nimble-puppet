@@ -1,15 +1,28 @@
 {
-    "name": "nimble-nimblestorage",
-    "version": "2.0.0",
+    "name": "nimblestorage-nimblestorage",
+    "version": "2.0.3",
     "author": "Ashish-MSys Technologies LLC",
-    "summary": "Module to create/manage/maintain Nimblestorage arrays",
+    "summary": "Module to manage Nimble Storage array resources",
     "license": "Apache-2.0",
     "source": "https://github.com/NimbleStorage/nimble-puppet",
     "project_page": "https://github.com/NimbleStorage/nimble-puppet",
     "issues_url": "https://github.com/NimbleStorage/nimble-puppet/issues",
+    "operatingsystem_support": [
+       {
+          "operatingsystem":"RedHat",
+          "operatingsystemrelease":[ "7.1", "7.2", "7.3" ]
+       },
+       {
+          "operatingsystem":"CentOS",
+          "operatingsystemrelease":[ "7.1", "7.2", "7.3" ]
+       },
+       {
+          "operatingsystem": "Ubuntu",
+          "operatingsystemrelease": [ "16.04" ]
+       }
+    ],
     "dependencies": [
-        { "name": "puppetlabs-stdlib", "version_requirement": ">= 4.15.0" },
-        { "name": "puppetlabs-ntp", "version_requirement": ">= 6.0.0" }
+        { "name": "puppetlabs-stdlib", "version_requirement": ">= 4.15.0" }
     ],
     "data_provider": null
 }

@@ -1,0 +1,32 @@
+---
+example-agent:
+  - nimblestorage::init
+  - nimblestorage::volume
+  - nimblestorage::snapshot
+
+multipath: 
+  config: true
+
+iscsiadm:
+  config: 
+    ensure: present
+    port: 3260
+    target: 192.168.59.64
+    user: "%{alias('chap.username')}"
+    password: "%{alias('chap.password')}"
+
+chap:
+  ensure: present
+  username: chapuser
+  password: password_25-24
+  systemIdentifier: example-chap-account
+
+volumes:
+  example-vol:
+    ensure: present
+    name: example-vol
+
+snapshots:
+  example-snapshot:
+    ensure: present
+    vol_name: "%{alias('volumes.example-vol.name')}"

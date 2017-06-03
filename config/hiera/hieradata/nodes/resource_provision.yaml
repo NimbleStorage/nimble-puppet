@@ -1,0 +1,87 @@
+---
+example-agent:
+  - nimblestorage::init
+  - nimblestorage::chap
+  - nimblestorage::initiator_group
+  - nimblestorage::initiator
+  - nimblestorage::protection_template
+  - nimblestorage::volume_collection
+  - nimblestorage::volume
+  - nimblestorage::acr
+  - nimblestorage::fs_mount
+
+iscsiadm:
+  config: 
+    ensure: present
+    port: 3260
+    target: 192.168.59.64
+    user: "%{alias('chap.username')}"
+    password: "%{alias('chap.password')}"
+
+chap:
+  ensure: present
+  username: chapuser
+  password: password_25-24
+  systemIdentifier: example-chap-account
+
+initiator:
+  ensure: present
+  groupname: "%{::hostname}"
+  label: "%{::hostname}:sw-iscsi"
+  ip_address: "*"
+  access_protocol: "iscsi"
+  description: "This is an example initiator"
+  subnets:
+    - Management
+
+multipath: 
+  config: true
+
+protection_template:
+  example-prot-tmpl:
+    ensure: present
+    schedule_list:
+      - name: minutes
+        period_unit: minutes
+        period: 5
+        num_retain: 13
+      - name: hours
+        period_unit: hours
+        period: 1
+        num_retain: 25
+      - name: days
+        period_unit: days
+        period: 1
+        num_retain: 31
+
+volume_collection:
+  example-vol-coll:
+    ensure: present
+    prottmpl_name: example-prot-tmpl
+
+volumes:
+  example-vol:
+    ensure: present
+    name: example-vol
+    size: 1000m
+    description: Example Volume
+    perfpolicy: default
+    force: true
+    online: true
+    vol_coll: example-vol-coll
+
+access_control:
+  example-vol:
+    ensure: present
+    volume_name: example-vol
+    chap_user: "%{alias('chap.username')}"
+    initiator_group : "%{::hostname}"
+    apply_to: both
+
+mount_points:
+  example-vol:
+    ensure: present
+    target_vol: example-vol
+    mount_point: /mnt/example-vol
+    fs: xfs
+    label: example-vol

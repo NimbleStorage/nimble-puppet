@@ -1,0 +1,43 @@
+---
+example-agent:
+  - nimblestorage::init
+  - nimblestorage::volume
+  - nimblestorage::snapshot
+  - nimblestorage::fs_mount
+
+multipath: 
+  config: true
+
+iscsiadm:
+  config: 
+    ensure: present
+    port: 3260
+    target: 192.168.59.64
+    user: "%{alias('chap.username')}"
+    password: "%{alias('chap.password')}"
+
+chap:
+  ensure: present
+  username: chapuser
+  password: password_25-24
+  systemIdentifier: example-chap-account
+
+snapshots:
+  example-snapshot:
+    ensure: present
+    vol_name: example-vol
+
+volumes:
+  example-clone:
+    ensure: present
+    name: example-clone
+    base_snap_name: example-snapshot
+    clone: true
+
+mount_points:
+  example-clone:
+    ensure: present
+    target_vol: example-clone
+    mount_point: /mnt/example-clone
+    fs: xfs
+    label: example-clone

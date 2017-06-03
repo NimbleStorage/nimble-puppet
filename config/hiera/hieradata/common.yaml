@@ -1,11 +1,4 @@
 ---
-ntp:
-  autoupdate: true
-  enable: true
-  servers:
-    - pool.ntp.org
-    - 0.us.pool.ntp.org
-
 transport:
-  server: # Nimble Array Management IP Address ### REST Interface
-  port: # Nimble Array Management Port ### REST Interface
+  server: <Nimble Array Management IP Address>
+  port: 5392

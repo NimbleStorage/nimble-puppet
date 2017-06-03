@@ -38,7 +38,6 @@ class nimblestorage::host_init{
 }
 
 class nimblestorage::init{
-  class { 'ntp': }
   class { 'nimblestorage::multipath::load': }
   class { 'nimblestorage::iscsi::service': }
   class { 'nimblestorage::host_init': }

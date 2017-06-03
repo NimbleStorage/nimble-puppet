@@ -1,0 +1,87 @@
+---
+example-agent:
+  - nimblestorage::cleanup
+  - nimblestorage::chap
+  - nimblestorage::initiator_group
+  - nimblestorage::initiator
+  - nimblestorage::protection_template
+  - nimblestorage::volume_collection
+  - nimblestorage::volume
+  - nimblestorage::acr
+  - nimblestorage::fs_mount
+
+mount_points:
+  example-vol:
+    ensure: absent
+    target_vol: example-vol
+    mount_point: /mnt/example-vol
+    fs: xfs
+    label: example-vol
+
+access_control:
+  example-vol:
+    ensure: absent
+    volume_name: example-vol
+    chap_user: "%{alias('chap.username')}"
+    initiator_group : "%{::hostname}"
+    apply_to: both
+
+iscsiadm:
+  config: 
+    ensure: absent
+    port: 3260
+    target: 192.168.59.64
+    user: "%{alias('chap.username')}"
+    password: "%{alias('chap.password')}"
+
+chap:
+  ensure: absent
+  username: chapuser
+  password: password_25-24
+  systemIdentifier: example-chap-account
+
+initiator:
+  ensure: absent
+  groupname: "%{::hostname}"
+  label: "%{::hostname}:sw-iscsi"
+  ip_address: "*"
+  access_protocol: "iscsi"
+  description: "This is an example initiator group"
+  subnets:
+    - Management
+
+multipath: 
+  config: true
+
+protection_template:
+  example-prot-tmpl:
+    ensure: absent
+    schedule_list:
+      - name: minutes
+        period_unit: minutes
+        period: 5
+        num_retain: 13
+      - name: hours
+        period_unit: hours
+        period: 1
+        num_retain: 25
+      - name: days
+        period_unit: days
+        period: 1
+        num_retain: 31
+
+volume_collection:
+  example-vol-coll:
+    ensure: absent
+    prottmpl_name: example-prot-tmpl
+
+volumes:
+  example-vol:
+    ensure: absent
+    name: example-vol
+    size: 1000m
+    description: Example Volume
+    perfpolicy: default
+    force: true
+    online: true
+    vol_coll: example-vol-coll

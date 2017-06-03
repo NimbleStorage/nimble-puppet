@@ -1,0 +1,36 @@
+---
+example-agent:
+  - nimblestorage::init
+  - nimblestorage::volume
+  - nimblestorage::fs_mount
+
+multipath: 
+  config: true
+
+iscsiadm:
+  config: 
+    ensure: present
+    port: 3260
+    target: 192.168.59.64
+    user: "%{alias('chap.username')}"
+    password: "%{alias('chap.password')}"
+
+chap:
+  ensure: present
+  username: chapuser
+  password: password_25-24
+  systemIdentifier: example-chap-account
+
+volumes:
+  example-vol:
+    ensure: present
+    name: example-vol
+    size: 2000m
+
+mount_points:
+  example-vol:
+    ensure: present
+    target_vol: example-vol
+    mount_point: /mnt/example-vol
+    fs: xfs
+    label: example-vol
