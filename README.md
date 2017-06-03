@@ -93,11 +93,10 @@ The git repo contains configuration examples.
 ```
 git clone 'https://github.com/NimbleStorage/nimble-puppet'
 cd nimble-puppet
-cp config/eyaml/eyaml-conf.yaml /etc/eyaml-conf.yaml
-cp config/hiera/hiera.yaml /etc/puppetlabs/puppet/hiera.yaml
+cp -f config/eyaml/eyaml-conf.yaml /etc/eyaml-conf.yaml
+cp -f config/hiera/hiera.yaml /etc/puppetlabs/puppet/hiera.yaml
 cp -r config/hiera/hieradata /etc/puppetlabs/code/environments/production
 cp config/site.pp /etc/puppetlabs/code/environments/production/manifests
-chmod 644 /etc/puppetlabs/keys/*
 puppet generate types
 ```
 
@@ -107,7 +106,7 @@ gem install hiera hiera-eyaml
 /opt/puppetlabs/bin/puppetserver gem install hiera-eyaml
 export EYAML_CONFIG=/etc/eyaml-conf.yaml
 eyaml createkeys
-mv keys /etc/puppetlabs
+chown puppet /etc/puppetlabs/keys/*
 ```
 
 Add Nimble Storage array credentials:
@@ -124,7 +123,7 @@ credentials:
 ```
 **Note:** Only replace `<username>` and `<password>`, don't replace the brackets!
 
-Add the REST API transport
+Add the REST API transport:
 
 Contents of `/etc/puppetlabs/code/environments/production/hieradata/common.yaml`:
 ```
@@ -140,7 +139,7 @@ It's required to establish a trust between the agent and the master using a cert
 #### Agent
 Submit a certificate signing request (CSR) to the certificate authority (CA) Puppet master:
 ```
-puppet agent --server <Master IP address or hostname> --waitforcert 60 -t --verbose
+puppet agent --server <Master FQDN or hostname> --waitforcert 60 -t --verbose
 ```
 
 #### Master
@@ -153,12 +152,17 @@ puppet cert sign <Agent hostname>
 #### Agent
 Testing agent:
 ```
-puppet agent -t -v
+puppet agent -t -v --server <Master IP address or hostname>
 ```
 
-If the agent doesn't return successfully (although nothing to do), please follow the troubleshooting steps in the next section.
+If the agent doesn't return successfully (although nothing to do), please follow the troubleshooting steps in the next section. Complaints on not finding the agent in the backend is most likely related to not having any manifests configured for the agent.
 
-Starting agent on boot:
+Starting agent on boot requires that the agent can find the master, contents of `/etc/puppetlabs/puppet/puppet.conf`:
+```
+server = <Master FQDN or hostname>
+```
+
+Enable the Puppet agent at boot and make sure it starts at boot:
 ```
 puppet resource service puppet ensure=running enable=true
 ```
