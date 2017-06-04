@@ -19,7 +19,7 @@ Please see the documentation on [Puppet forge](https://forge.puppet.com/nimblest
 Examples will step through a single agent and master setup using a Hiera backend against a single Nimble Storage array. Those must meet the following requirements:
 
 * RHEL/CentOS 7.x or Ubuntu 16.04
-* Nimble Storage array with NimbleOS 3.3+
+* Nimble Storage iSCSI array with NimbleOS 3.3+
 * Puppet 4.15+
 
 ## Installation
