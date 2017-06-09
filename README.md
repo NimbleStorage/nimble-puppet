@@ -501,6 +501,9 @@ Please feel free to submit pull requests. Please include updates to the document
 Use Git issues to report and track all activities, also attach (mandatory) trace log for the same.
 
 ## Changelog
+### 2.0.4
+* Pass linting
+
 ### 2.0.3
 * Remved NTP dependency
 
