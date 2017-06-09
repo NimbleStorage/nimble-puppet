@@ -1,10 +1,4 @@
-
-class nimblestorage::multipath::load inherits nimblestorage::multipath::params{
-  multipath { 'multipath-config':
-    ensure => hiera('multipath.config')
-  }
-}
-
+# manifests/multipath/params.pp
 class nimblestorage::multipath::params {
   case $::osfamily {
     'RedHat': {

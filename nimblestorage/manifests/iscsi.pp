@@ -1,41 +1,4 @@
-
-class nimblestorage::iscsi::params {
-
-    case $::osfamily {
-        'RedHat': {
-            $initiator_packages = 'iscsi-initiator-utils'
-            $initiator_services = 'iscsid'
-        }
-      'Debian': {
-        $initiator_packages = 'open-iscsi'
-        $initiator_services = 'open-iscsi'
-        $iscsid_startup = 'iscsid'
-      }
-        default: {
-            fail ("${title}: operating system '${::operatingsystem}' is not supported")
-        }
-    }
-}
-
-class nimblestorage::iscsi::service (
-        Boolean $enable=true,
-        Variant[Boolean, Enum['running', 'stopped']] $ensure='running',
-    ) inherits nimblestorage::iscsi::params {
-
-    package { $::nimblestorage::iscsi::params::initiator_packages:
-        ensure => installed,
-        notify => Service[$::nimblestorage::iscsi::params::initiator_services],
-    }
-
-    service { $::nimblestorage::iscsi::params::initiator_services:
-        ensure     => $ensure,
-        enable     => $enable,
-        hasrestart => true,
-        hasstatus  => true
-    }
-
-}
-
+# manifests/iscsi.pp
 define nimblestorage::iscsi (
   String[1] $password,
   String[1] $user,
@@ -57,12 +20,11 @@ define nimblestorage::iscsi (
     before    => Service[$::nimblestorage::iscsi::params::initiator_services],
     notify    => Service[$::nimblestorage::iscsi::params::initiator_services],
     subscribe => Package[$::nimblestorage::iscsi::params::initiator_packages],
-    content   => template("nimblestorage/iscsid.conf.erb"),
+    content   => template('nimblestorage/iscsid.conf.erb'),
     show_diff => false,
   }
 
   if $ensure == 'present'{
-
     case $::osfamily {
       'Debian': {
         file { '/usr/sbin/iscsiadm':
@@ -70,18 +32,18 @@ define nimblestorage::iscsi (
           target => '/usr/bin/iscsiadm',
         }
       }
+      default: {
+      }
     }
 
     $iface = split($::interfaces, ',')
 
     $iface.each |String $i| {
     if($i != 'lo'){
-      exec { "/usr/sbin/iscsiadm -m iface --op new -I $i":
-      unless => "/usr/sbin/iscsiadm -m iface --op show -I $i | grep 'iface.iscsi_ifacename'"
+      exec { '/usr/sbin/iscsiadm -m iface --op new -I $i':
+      unless => "/usr/sbin/iscsiadm -m iface --op show -I ${i} | grep 'iface.iscsi_ifacename'"
         }
       }
     }
   }
-
-
 }

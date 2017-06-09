@@ -1,4 +1,5 @@
-class nimblestorage::volume{
+# manifests/volume.pp
+class nimblestorage::volume {
   create_resources(nimble_volume, hiera('volumes', { }), {
     transport => hiera_hash('transport'),
     config => hiera('iscsiadm.config'),

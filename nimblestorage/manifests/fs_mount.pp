@@ -1,3 +1,4 @@
+# manifests/fs_mount.pp
 class nimblestorage::fs_mount{
   require nimblestorage::iscsiinitiator
 

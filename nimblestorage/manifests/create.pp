@@ -1,3 +1,4 @@
+# manifests/create.pp
 class nimblestorage::create{
   require nimblestorage::init
   require nimblestorage::chap
