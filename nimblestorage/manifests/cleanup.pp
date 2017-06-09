@@ -1,3 +1,4 @@
+# manifests/cleanup.pp
 class nimblestorage::cleanup{
   require nimblestorage::init
   require nimblestorage::snapshot
